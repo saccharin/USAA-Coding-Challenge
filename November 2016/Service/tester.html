@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>The AWS Tester</title>
+	 
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+	<!-- Latest compiled and minified JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+	
+	<script src="Field.js"></script>
+	<script src="Errors.js"></script>
+	<script src="AbstractService.js"></script>
+	<script src="PortalMemberService.js"></script>
+	<script src="BasicInformationService.js"></script>
+
+<script>
+var bis;
+var e = {
+	memberid: 1,
+	body: {
+		FirstName: 'Chris',
+		LastName: '',
+		OtherField: 'Irrelevant',
+		chaosMonkey: .1
+	}
+};
+var context = {
+	done: function(a,b) {
+		if(a)
+			console.error("Failure :( :", a);
+		else
+			console.log("Success! :", b);
+	}
+};
+function cb(params, callback) {
+	console.log({ 
+		params: params,
+	});
+	callbackSuccess: callback(null, { success: true });
+}
+var dynamo = {
+	getItem: function(parameters, callback) {
+		cb(parameters, callback);
+	}, 
+	update: function(parameters, callback) {
+		cb(parameters, callback);
+	}
+};
+$(document).ready(function() {
+	bis = new BasicInformationService(dynamo, e, context);
+});
+</script>
+
+</head>
+<body>
+<div class="container">
+	<header>
+	<h1>The AWS Tester</h1>
+	<hr />
+	</header>
+
+
+</div>
+</body>
+</html>
