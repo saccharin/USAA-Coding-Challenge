@@ -1,11 +1,11 @@
 class Field
 {
-	constructor(name, property, dbfield, validate, clean) {
+	constructor(name, dbfield, validate, clean, isPrimaryKey) {
 		this.name = name;
-		this.property = property;
 		this.dbfield = dbfield;
 		this.validationFunction = validate;
 		this.cleanFunction = clean;
+		this.isPrimaryKey = isPrimaryKey === true;
 	}
 	
 	clean(value) {

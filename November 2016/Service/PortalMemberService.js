@@ -1,7 +1,7 @@
 class PortalMemberService extends AbstractService
 {
-	constructor(dynamo, event, context) {
-		super(dynamo, event, context);
+	constructor(dynamo, event, context, callback) {
+		super(dynamo, event, context, callback);
 	}
 
 	getTableName() {
