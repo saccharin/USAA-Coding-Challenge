@@ -1,17 +1,18 @@
 class AbstractService
 {
-	constructor(dynamo, event, context) {
-		if (new.target === AbstractService) {
-		  throw new TypeError("AbstractService is an abstract class. You must inherit it for it to work correctly.");
-		}
+	constructor(dynamo, event, context, callback) {
+		//if (new.target === AbstractService) {
+		//  throw new TypeError("AbstractService is an abstract class. You must inherit it for it to work correctly.");
+		//}
 		
 		this.dynamo = dynamo;
 		this.event = event;
 		this.context = context;
+		this.callback = callback;
+
 		this.chaosMonkeyOdds = 0;
-		
-		if(event.body && event.body.chaosMonkey)
-			this.chaosMonkeyOdds = event.body.chaosMonkey;
+		if(event && event.chaosMonkey)
+			this.chaosMonkeyOdds = event.chaosMonkey;
 		
 		this.TableName = this.getTableName();
 		this.fields = this.getFields();
@@ -19,12 +20,12 @@ class AbstractService
 	
 	// Abstract values
 	getFields() {
-		error = new Error("getFields() is an abstract method that must be overriden.");
+		var error = new Error("getFields() is an abstract method that must be overriden.");
 		throw error;
 	}
 
 	getTableName() {
-		error = new Error("getTableName() is an abstract method that must be overriden.");
+		var error = new Error("getTableName() is an abstract method that must be overriden.");
 		throw error;
 	}
 	
@@ -45,85 +46,117 @@ class AbstractService
 				stack.splice(1,2);
 			this.stack = stack.join('\n');
 		}
-		throw new ChaosMonkeyException("Chaos Monkey exception thrown! Be sure to check that your components are all working.");
+		return JSON.stringify(new ChaosMonkeyException("Chaos Monkey exception thrown! Be sure to check that your components are all working."));
 	}
 	
 	// Helper Methods
-	getProjectionExpression() {
-		return this.fields.map(function(f) { return f.dbfield; }).join(',');
+	getProjectionExpression(omitPrimaryKeys) {
+		var abc = 'abcdefghijklmnopqrstuvwxyz';
+		
+		var projectionExpression = [];
+		var attributeNames = {};
+		var updateExpression = [];
+
+		for(var i=0;i<this.fields.length;i++) {
+			var f = this.fields[i];
+		    if(omitPrimaryKeys && f.isPrimaryKey)
+		        continue;
+		    
+			var placeholder = '#' + abc[i];
+			projectionExpression.push(placeholder);
+			attributeNames[placeholder] = f.dbfield;
+			updateExpression.push(placeholder + '=:' + f.dbfield);
+		}
+
+		return {
+			ProjectionExpression: projectionExpression.join(', '),
+			AttributeNames: attributeNames,
+			UpdateExpression: 'SET ' + updateExpression.join(', ')
+		};
 	}
 
-	getUpdateExpression() {
-		return "set " + this.fields.map(function(f) { return "obj." + f.dbfield + "=:" + f.dbfield; }).join(', ');
+	buildResult(err, res) {
+		return {
+	        statusCode: err ? '400' : '200',
+	        body: err ? err.message : JSON.stringify(res),
+	        headers: {
+	            'Content-Type': 'application/json',
+	        },
+	    };
 	}
 	
 	// REST Methods
 	get() {
-		this.chaosMonkey();
+		var m = this.chaosMonkey();
+		if(m) { 
+		    this.callback(m, null);
+		    return;
+		}
+		
+		var projectionExpression = this.getProjectionExpression();
+		console.log({
+			TableName: this.TableName,
+			Key: {
+				id: this.event.id
+			},
+			ProjectionExpression: projectionExpression.ProjectionExpression,
+			ExpressionAttributeNames: projectionExpression.AttributeNames
+		});
 		
 		dynamo.getItem({
 			TableName: this.TableName,
 			Key: {
-				memberid: this.event.memberid
+				id: this.event.id
 			},
-			ProjectionExpression: this.getProjectionExpression()
-		}, (err, data) => {
-			if(err) {
-				console.log('Error within ' + this.constructor.name, err);
-				this.context.done('Unable to retrieve Information from the ' 
-				+ this.constructor.name
-				+ ' service.', null);
-			} else {
-				this.context.done(null, data.Item || {});
-			}
-		});
+			ProjectionExpression: projectionExpression.ProjectionExpression,
+			ExpressionAttributeNames: projectionExpression.AttributeNames
+		}, (err, data) => this.callback(null, this.buildResult(err, data)));
 	}
 	
 	post() {
 		if(!this.event)
-			throw new Error("There was no event data in this request.");
+			return this.callback("There was no event data in this request.", null);
 		if(!this.event.body)
-			throw new Error("There was no body data in this request.");
+			return this.callback("There was no body data in this request.", null);
 		
+		var projectionExpression = this.getProjectionExpression(true);
 		var ExpressionAttributeValues = {};
-		var errors = new Errors(this.fields.map(function(f) { return f.property }));
+		var errors = new Errors(this.fields.filter(function(f) { return !f.isPrimaryKey; }).map(function(f) { return f.dbfield }));
 		
-		this.fields.forEach((f) => {
-			var value = this.event.body[f.property];
+		this.fields.filter(function(f) { return !f.isPrimaryKey; }).forEach((f) => {
+			var value = this.event.body[f.dbfield];
 			value = f.clean(value);
 			f.validate(errors, value);
-			ExpressionAttributeValues[f.dbfield] = value;
+			ExpressionAttributeValues[':' + f.dbfield] = value;
 		});
 		
 		if(errors.hasError)
-			throw new Error(JSON.stringify(errors));
+			return this.callback(errors, null);
 		
-		this.chaosMonkey();
+		var m = this.chaosMonkey();
+		if(m) {
+		    this.callback(m, null);
+		    return;
+		}
+		console.log(projectionExpression);
 		
-		dynamo.update({
+		dynamo.updateItem({
 			TableName: this.TableName,
 			Key: {
-				memberid: this.event.body.memberid
+				id: this.event.body.id
 			}, 
-			UpdateExpression: this.getUpdateExpression(),
+			UpdateExpression: projectionExpression.UpdateExpression,
+			ExpressionAttributeNames: projectionExpression.AttributeNames,
 			ExpressionAttributeValues: ExpressionAttributeValues
-		}, (err, data) => {
-			if (err) {
-				console.error('Unable to update item within ' + this.constructor.name, err);
-			} else {
-				this.context.done(null, data.Item || {});
-			}
-		});
+		}, (err, data) => this.callback(null, this.buildResult(err, data)));
 	}
 	
 	put() {
-		error = new Error("put() is not used");
-		throw error;
+		this.callback("put() is not used", null);
 	}
 	
 	del() {
-		error = new Error("del() is not used");
-		throw error;
+		this.callback("del() is not used", null);
 	}
 	
 }

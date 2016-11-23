@@ -11,7 +11,7 @@ class Errors
 		if(!this[key])
 			this[key] = [];
 		
-		if(err == null)
+		if(err === null)
 			return;
 		
 		if(typeof err == "string" && err.length > 0) {
