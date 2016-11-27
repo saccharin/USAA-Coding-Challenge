@@ -220,13 +220,17 @@
 	};
 	
 	function handleError(element, type, error) {
-	
+		console.error(error);
+		
 		function toString(err, messages) {
 			for(var prop in err) {
 				var parsed = null;
 				try {
+					if(typeof error[prop] == 'object')
+						return toString(error[prop], messages);
+					
 					parsed = JSON.parse(error[prop]);
-					console.log(parsed);
+					//console.log(parsed);
 					if(typeof parsed == 'object')
 						toString(parsed, messages);
 					else
@@ -236,7 +240,6 @@
 				}
 			}
 		}
-		console.error(error);
 		element.className = 'panel panel-danger';
 		var texts = [];
 		toString(error, texts);

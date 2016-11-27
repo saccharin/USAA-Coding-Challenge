@@ -75,7 +75,8 @@ class AbstractService
 				stack.splice(1,2);
 			this.stack = stack.join('\n');
 		}
-		return JSON.stringify(new ChaosMonkeyException("Chaos Monkey exception thrown! Be sure to check that your components are all working."));
+		//return JSON.stringify(new ChaosMonkeyException("Chaos Monkey exception thrown! Be sure to check that your components are all working."));
+		throw new ChaosMonkeyException("Chaos Monkey exception thrown! Be sure to check that your components are all working.");
 	}
 	
 	// Helper Methods
@@ -116,11 +117,7 @@ class AbstractService
 	
 	// REST Methods
 	get() {
-		var m = this.chaosMonkey();
-		if(m) { 
-		    this.callback(m, null);
-		    return;
-		}
+		this.chaosMonkey();
 		
 		var projectionExpression = this.getProjectionExpression();
 		console.log({
@@ -162,11 +159,8 @@ class AbstractService
 		if(errors.hasError)
 			return this.callback(errors, null);
 		
-		var m = this.chaosMonkey();
-		if(m) {
-		    this.callback(m, null);
-		    return;
-		}
+		this.chaosMonkey();
+		
 		console.log(projectionExpression);
 		
 		dynamo.updateItem({
@@ -528,7 +522,7 @@ exports.handler = function(event, context, callback) {
         callback: callback
     });
     var done = (err, res) => callback(null, {
-        statusCode: err ? '400' : '200',
+        statusCode: err ? '500' : '200',
         body: err ? err.message : JSON.stringify(res),
         headers: {
             'Content-Type': 'application/json',
@@ -560,20 +554,24 @@ exports.handler = function(event, context, callback) {
 	}
 
 
-    switch (event.httpMethod) {
-        case 'DELETE':
-        	service.del();
-            break;
-        case 'GET':
-            service.get();
-            break;
-        case 'POST':
-            service.post();
-            break;
-        case 'PUT':
-            service.put();
-            break;
-        default:
-        	done(new Error(`Unsupported method "${event.httpMethod}"`));
-    }
+	try {
+        switch (event.httpMethod) {
+            case 'DELETE':
+            	service.del();
+                break;
+            case 'GET':
+                service.get();
+                break;
+            case 'POST':
+                service.post();
+                break;
+            case 'PUT':
+                service.put();
+                break;
+            default:
+            	throw new Error(`Unsupported method "${event.httpMethod}"`);
+        }
+	} catch(x) {
+		done(x);
+	}
 };

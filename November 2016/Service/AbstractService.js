@@ -1,4 +1,4 @@
-class AbstractService
+lass AbstractService
 {
 	constructor(dynamo, event, context, callback) {
 		//if (new.target === AbstractService) {
@@ -46,7 +46,8 @@ class AbstractService
 				stack.splice(1,2);
 			this.stack = stack.join('\n');
 		}
-		return JSON.stringify(new ChaosMonkeyException("Chaos Monkey exception thrown! Be sure to check that your components are all working."));
+		//return JSON.stringify(new ChaosMonkeyException("Chaos Monkey exception thrown! Be sure to check that your components are all working."));
+		throw new ChaosMonkeyException("Chaos Monkey exception thrown! Be sure to check that your components are all working.");
 	}
 	
 	// Helper Methods
@@ -87,11 +88,7 @@ class AbstractService
 	
 	// REST Methods
 	get() {
-		var m = this.chaosMonkey();
-		if(m) { 
-		    this.callback(m, null);
-		    return;
-		}
+		this.chaosMonkey();
 		
 		var projectionExpression = this.getProjectionExpression();
 		console.log({
@@ -133,11 +130,8 @@ class AbstractService
 		if(errors.hasError)
 			return this.callback(errors, null);
 		
-		var m = this.chaosMonkey();
-		if(m) {
-		    this.callback(m, null);
-		    return;
-		}
+		this.chaosMonkey();
+		
 		console.log(projectionExpression);
 		
 		dynamo.updateItem({
