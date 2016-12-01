@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MSR Window</title>
+
+	<!-- Bootstrap -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+	
+	<!-- React -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.3.1/react.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.3.1/react-dom.js"></script>
+	
+	<!-- Babel -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
+	
+	<!-- Code -->
+	<script src="Config.js"></script>
+	<script src="Services.js"></script>
+	<script src="Utils.js"></script>
+	
+	<script type="text/babel">
+	class BasicInfo extends React.Component {
+		render() {
+			var values = [];
+			var i=0;
+			Object.getOwnPropertyNames(this.props.member).forEach((p) => {
+				if(['first_name', 'last_name'].indexOf(p) >= 0)
+					return;
+					
+				var key = (i++).toString();
+				values.push(<BasicProperty name={p} value={this.props.member[p]} key={key} />);
+			});
+			return (
+				<div className="panel panel-default">
+					<div className="panel-heading">
+						<h2>
+							{this.props.member.first_name} {this.props.member.last_name}
+							<small className="pull-right">Member ID: <strong>{this.props.member.id}</strong></small>
+						</h2>
+					</div>
+					<div className="panel-body row">
+						<div className="col-md-4">
+							<h4>Personal Information</h4>
+							<dl className="dl-horizontal">
+								<dt>Gender</dt>
+								<dd>{this.props.member.gender}</dd>
+								<dt>Birthday</dt>
+								<dd>{this.props.member.dob}</dd>
+								<dt>SSN</dt>
+								<dd>{this.props.member.ssn}</dd>
+								<dt>Marital Status</dt>
+								<dd>{this.props.member.marital_status}</dd>
+							</dl>
+						</div>
+						<div className="col-md-4">
+							<h4>Contact Information</h4>
+							<dl className="dl-horizontal">
+								<dt>Home Phone Number</dt>
+								<dd>{this.props.member.home_phone}</dd>
+								<dt>Email Address</dt>
+								<dd>{this.props.member.email}</dd>
+								<dt>Home Address</dt>
+								<dd>
+									<address>
+										{this.props.member.street_address}<br />
+										{this.props.member.city}, {this.props.member.state}<br />
+										{this.props.member.country} ({this.props.member.country_code})
+									</address>
+								</dd>
+							</dl>
+						</div>
+						<div className="col-md-4">
+							<h4>Employment Information</h4>
+							<dl className="dl-horizontal">
+								<dt>Occupation</dt>
+								<dd>{this.props.member.occupation}</dd>
+								<dt>Employer</dt>
+								<dd>{this.props.member.employer}</dd>
+							</dl>
+						</div>
+					</div>
+				</div>
+			);
+		}
+	};
+	class BasicProperty extends React.Component {
+		render() {
+			return (
+				<div className="col-md-3">
+					<dl className="dl-horizontal"><dt>{this.props.name}</dt><dd>{this.props.value}</dd></dl>
+				</div>
+			);
+		}
+	};
+	
+	class MilitaryService extends React.Component {
+		render() {
+			var rows = [];
+			var i = 0;
+			
+			if(!this.props.member.military)
+				this.props.member.military = [];
+			
+			this.props.member.military.forEach(function(military) {
+				var key = (i++).toString();
+				rows.push(<MilitaryInstance service={military} key={key} />);
+			});
+			return (
+				<div className="panel panel-default">
+					<div className="panel-heading">
+						<h3>Military Service</h3>
+					</div>
+					<table className="table">
+						<thead>
+							<tr><th>Branch</th><th>Status</th></tr>
+						</thead>
+						<tbody>
+							{rows}
+						</tbody>
+					</table>
+				</div>
+			);
+		}
+	};
+	class MilitaryInstance extends React.Component {
+		render() {
+			return (
+				<tr>
+					<td>{this.props.service.branch}</td>
+					<td>{this.props.service.status}</td>
+				</tr>
+				);
+		}
+	};
+	
+	class Identifications extends React.Component {
+		render() {
+			var rows = [];
+			var i=0;
+			
+			if(!this.props.member.identification)
+				this.props.member.identification = [];
+			
+			this.props.member.identification.forEach(function(id) {
+				var key = (i++).toString();
+				rows.push(<Identification id={id} key={key} />);
+			});
+			
+			return (
+				<div className="panel panel-default">
+					<div className="panel-heading">
+						<h3>Identifications</h3>
+					</div>
+					<table className="table table-striped">
+						<thead>
+							<tr><th>ID Type</th><th>ID Number</th><th>Validity</th></tr>
+						</thead>
+						<tbody>
+							{rows}
+						</tbody>
+					</table>
+				</div>
+			);
+		}
+	};
+	class Identification extends React.Component {
+		render() {
+			var validity = this.props.id.valid ? 'Valid' : <strong>Invalid</strong>
+			return (
+				<tr>
+					<td>{this.props.id.type}</td>
+					<td>{this.props.id.number}</td>
+					<td>{validity}</td>
+				</tr>
+			);
+		}
+	};
+	
+	
+	class Products extends React.Component {
+		render() {
+			var rows = [];
+			var i=0;
+			
+			if(!this.props.member.product)
+				this.props.member.product = [];
+			
+			this.props.member.product.forEach(function(product) {
+				var key = (i++).toString();
+				rows.push(<Product product={product} key={key} />);
+			});
+			
+			return (
+				<div className="panel panel-default">
+					<div className="panel-heading">
+						<h3>Products</h3>
+					</div>
+					<table className="table table-striped">
+						<thead>
+							<tr><th>Product</th><th>ID Number</th></tr>
+						</thead>
+						<tbody>
+							{rows}
+						</tbody>
+					</table>
+				</div>
+			);
+		}
+	};
+	class Product extends React.Component {
+		render() {
+			return (
+				<tr>
+					<td>{this.props.product.type}</td>
+					<td>{this.props.product.number}</td>
+				</tr>
+			);
+		}
+	};
+	
+	function handleError(element, type, error, xhr) {
+		
+		function toString(err, messages) {
+			if(typeof error === 'string') {
+				messages.push(error);
+				return;
+			}
+			for(var prop in err) {
+				var parsed = null;
+				try {
+					if(typeof error[prop] == 'object')
+						return toString(error[prop], messages);
+					
+					parsed = JSON.parse(error[prop]);
+					//console.log(parsed);
+					if(typeof parsed == 'object')
+						toString(parsed, messages);
+					else
+						messages.push('<p><strong>' + prop + ':</strong> ' + err[prop] + '</p>');
+				} catch(x) {
+					messages.push('<p><strong>' + prop + ':</strong> ' + err[prop] + '</p>');
+				}
+			}
+		}
+		element.className = 'panel panel-danger';
+		var texts = [];
+		toString(error, texts);
+		
+		if(xhr) {
+			try {
+				var body = JSON.parse(JSON.parse(xhr.responseText).errorMessage).body;
+				toString(body, texts);
+			} catch (x) { }
+		}
+		
+		
+		element.innerHTML = '<div class="panel-heading"><h4>' + type + '</h4></div><div class="panel-body"><p>There was a problem retrieving the ' + 
+		type + ' data for this user.</p>' +
+		'<pre>'+ texts.join('') + '</pre></div>';
+	}
+	
+	var services;
+	$(document).ready(function() {
+		var memberid = Utils.getParameterByName('id');
+		services = new Services(
+			Config.ServiceResourceUrl,
+			Config.ApiKey,
+			Config.ChaosMonkeyOdds
+			);
+
+		services.getBasicInformation(
+			memberid,
+			function(response) {
+				try {
+					var member = response.body.Item;
+					ReactDOM.render(
+						<BasicInfo member={member} />,
+						document.getElementById('basic-info')
+						);
+				} catch(e) {
+					handleError(document.getElementById('basic-info'), 'Basic Information', response);
+				}},
+			function(x,s,e) {
+				handleError(document.getElementById('basic-info'), 'Basic Information', e, x);
+			});
+		
+		services.getMilitaryService(
+			memberid,
+			function(response) {
+				try {
+					var member = response.body.Item;
+					ReactDOM.render(
+						<MilitaryService member={member} />,
+						document.getElementById('military-service')
+						);
+				} catch(e) {
+					handleError(document.getElementById('military-service'), 'Military Service', response);
+				}},
+			function(x,s,e) {
+				handleError(document.getElementById('military-service'), 'Military Service', e, x);
+			});
+		
+		services.getIdentifications(
+			memberid,
+			function(response) {
+				try {
+					var member = response.body.Item;
+					ReactDOM.render(
+						<Identifications member={member} />,
+						document.getElementById('identifications')
+						);
+				} catch(e) {
+					handleError(document.getElementById('identifications'), 'Identifications', response);
+				}},
+			function(x,s,e) {
+				handleError(document.getElementById('identifications'), 'Identifications', e, x);
+			});
+		
+		services.getProducts(
+			memberid,
+			function(response) {
+				try {
+					var member = response.body.Item;
+					ReactDOM.render(
+						<Products member={member} />,
+						document.getElementById('products')
+						);
+				} catch(e) {
+					handleError(document.getElementById('products'), 'Products', response);
+				}},
+			function(x,s,e) {
+				handleError(document.getElementById('products'), 'Products', e, x);
+			});
+	});
+	</script>
+  </head>
+  <body>
+  	<div class="container-fluid">
+	    <h1>
+    		MSR Window
+    	</h1>
+		<hr />
+		
+		<div id="basic-info" class="panel"></div>
+		
+		<div class="row">
+			<div class="col-md-6">
+				<div id="military-service" class="panel"></div>
+				<div id="identifications" class="panel"></div>
+			</div>
+			<div class="col-md-6">
+				<div id="products" class="panel"></div>
+			</div>
+		</div>
+		
+		
+   </div>
+  </body>
+</html>

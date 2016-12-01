@@ -28,227 +28,125 @@
 	<!-- Code -->
 	<script src="Config.js"></script>
 	<script src="Services.js"></script>
+	<script src="Utils.js"></script>
 	
 	<script type="text/babel">
-		
-
-	class BasicInfo extends React.Component {
-		render() {
-			var values = [];
-			var i=0;
-			Object.getOwnPropertyNames(this.props.member).forEach((p) => {
-				if(['first_name', 'last_name'].indexOf(p) >= 0)
-					return;
-					
-				var key = (i++).toString();
-				values.push(<BasicProperty name={p} value={this.props.member[p]} key={key} />);
-			});
-			return (
-				<div className="panel panel-default">
-					<div className="panel-heading">
-						<h2>
-							{this.props.member.first_name} {this.props.member.last_name}
-							<small className="pull-right">Member ID: <strong>{this.props.member.id}</strong></small>
-						</h2>
-					</div>
-					<div className="panel-body row">
-						<div className="col-md-4">
-							<h4>Personal Information</h4>
-							<dl className="dl-horizontal">
-								<dt>Gender</dt>
-								<dd>{this.props.member.gender}</dd>
-								<dt>Birthday</dt>
-								<dd>{this.props.member.dob}</dd>
-								<dt>SSN</dt>
-								<dd>{this.props.member.ssn}</dd>
-								<dt>Marital Status</dt>
-								<dd>{this.props.member.marital_status}</dd>
-							</dl>
-						</div>
-						<div className="col-md-4">
-							<h4>Contact Information</h4>
-							<dl className="dl-horizontal">
-								<dt>Home Phone Number</dt>
-								<dd>{this.props.member.home_phone}</dd>
-								<dt>Email Address</dt>
-								<dd>{this.props.member.email}</dd>
-								<dt>Home Address</dt>
-								<dd>
-									<address>
-										{this.props.member.street_address}<br />
-										{this.props.member.city}, {this.props.member.state}<br />
-										{this.props.member.country} ({this.props.member.country_code})
-									</address>
-								</dd>
-							</dl>
-						</div>
-						<div className="col-md-4">
-							<h4>Employment Information</h4>
-							<dl className="dl-horizontal">
-								<dt>Occupation</dt>
-								<dd>{this.props.member.occupation}</dd>
-								<dt>Employer</dt>
-								<dd>{this.props.member.employer}</dd>
-							</dl>
-						</div>
-					</div>
-				</div>
-			);
-		}
-	};
-	class BasicProperty extends React.Component {
-		render() {
-			return (
-				<div className="col-md-3">
-					<dl className="dl-horizontal"><dt>{this.props.name}</dt><dd>{this.props.value}</dd></dl>
-				</div>
-			);
-		}
-	};
-	
-	class MilitaryService extends React.Component {
-		render() {
-			var rows = [];
-			var i = 0;
-			this.props.member.military.forEach(function(military) {
-				var key = (i++).toString();
-				rows.push(<MilitaryInstance service={military} key={key} />);
-			});
-			return (
-				<div className="panel panel-default">
-					<div className="panel-heading">
-						<h3>Military Service</h3>
-					</div>
-					<table className="table">
-						<thead>
-							<tr><th>Branch</th><th>Status</th></tr>
-						</thead>
-						<tbody>
-							{rows}
-						</tbody>
-					</table>
-				</div>
-			);
-		}
-	};
-	class MilitaryInstance extends React.Component {
-		render() {
-			return (
-				<tr>
-					<td>{this.props.service.branch}</td>
-					<td>{this.props.service.status}</td>
-				</tr>
-				);
-		}
-	};
-	
-	class Identifications extends React.Component {
-		render() {
-			var rows = [];
-			var i=0;
-			this.props.member.identification.forEach(function(id) {
-				var key = (i++).toString();
-				rows.push(<Identification id={id} key={key} />);
-			});
-			
-			return (
-				<div className="panel panel-default">
-					<div className="panel-heading">
-						<h3>Identifications</h3>
-					</div>
-					<table className="table table-striped">
-						<thead>
-							<tr><th>ID Type</th><th>ID Number</th><th>Validity</th></tr>
-						</thead>
-						<tbody>
-							{rows}
-						</tbody>
-					</table>
-				</div>
-			);
-		}
-	};
-	class Identification extends React.Component {
-		render() {
-			var validity = this.props.id.valid ? 'Valid' : <strong>Invalid</strong>
-			return (
-				<tr>
-					<td>{this.props.id.type}</td>
-					<td>{this.props.id.number}</td>
-					<td>{validity}</td>
-				</tr>
-			);
-		}
-	};
-	
-	
-	class Products extends React.Component {
-		render() {
-			var rows = [];
-			var i=0;
-			this.props.member.product.forEach(function(product) {
-				var key = (i++).toString();
-				rows.push(<Product product={product} key={key} />);
-			});
-			
-			return (
-				<div className="panel panel-default">
-					<div className="panel-heading">
-						<h3>Products</h3>
-					</div>
-					<table className="table table-striped">
-						<thead>
-							<tr><th>Product</th><th>ID Number</th></tr>
-						</thead>
-						<tbody>
-							{rows}
-						</tbody>
-					</table>
-				</div>
-			);
-		}
-	};
-	class Product extends React.Component {
-		render() {
-			return (
-				<tr>
-					<td>{this.props.product.type}</td>
-					<td>{this.props.product.number}</td>
-				</tr>
-			);
-		}
-	};
-	
-	function handleError(element, type, error) {
-		console.error(error);
-		
-		function toString(err, messages) {
-			for(var prop in err) {
-				var parsed = null;
-				try {
-					if(typeof error[prop] == 'object')
-						return toString(error[prop], messages);
-					
-					parsed = JSON.parse(error[prop]);
-					//console.log(parsed);
-					if(typeof parsed == 'object')
-						toString(parsed, messages);
-					else
-						messages.push('<p><strong>' + prop + ':</strong> ' + err[prop] + '</p>');
-				} catch(x) {
-					messages.push('<p><strong>' + prop + ':</strong> ' + err[prop] + '</p>');
-				}
-			}
-		}
-		element.className = 'panel panel-danger';
-		var texts = [];
-		toString(error, texts);
-		element.innerHTML = '<div class="panel-heading"><h4>' + type + '</h4></div><div class="panel-body"><p>There was a problem retrieving the ' + 
-		type + ' data for this user.</p>' +
-		'<pre>'+ texts.join('') + '</pre></div>';
-	}
 	
 	var services;
+
+	
+	class SearchResult extends React.Component {
+		render() {
+			var url = "member.html?id=" + this.props.member.id;
+			var src = 'imgs/' + this.props.member.gender + '.png';
+			
+			return (
+				<div className="media col-md-4">
+					<div className="media-left media-middle">
+						<a href={url}>
+							<img className="media-object" src={src} alt={this.props.member.gender} />
+						</a>
+					</div>
+					<div className="media-body">
+						<h4 className="media-heading">
+							<a href={url}>{this.props.member.first_name} {this.props.member.last_name}</a>
+						</h4>
+					</div>
+				</div>
+			);
+		}
+	};
+	class EmptyResults extends React.Component {
+		render() {
+			return (
+				<p><em>We found no search results for <strong>{this.props.search}</strong></em></p>
+			);
+		}
+	};
+	
+	class SearchModule extends React.Component {
+		constructor(props) {
+			super(props);
+			this.state = {
+				value: '', 
+				members: [],
+				searching: false
+			};
+			
+			this.handleChange = this.handleChange.bind(this);
+		}
+		
+		//getRandomPlaceholder() {
+		//	var placeholders = ['00100', 'chris', 'dunn', 'dunn, chris', 'chris dunn'];
+		//	return placeholders[Math.floor(Math.random() * placeholders.length)];
+		//}
+		
+		handleChange(event) {
+			this.setState({
+				value: event.target.value, 
+				searching: true
+			});
+			
+			if(event.target.value == '') {
+				Utils.typewatch(_ => {}, 1);
+				this.setState({
+					members: [],
+					searching: false
+				});
+				return;
+			}
+			
+			Utils.typewatch(_ => {
+				services.postSearch(this.state.value, 
+					(response) => {
+						this.setState({
+							members: response || [],
+							searching: false
+						});
+					},
+					function(x,s,e) {
+						this.setState({
+							members: [],
+							searching: false
+						});
+						console.error(e);
+					});
+			}, 500);
+		}
+		
+		render() {
+			var results = [];
+			this.state.members.forEach(function(r) {
+				results.push(<SearchResult member={r} key={r.id} />)
+			});
+			
+			if(!this.state.searching && results.length === 0 && 
+				(this.state.value || this.state.value.trim().length > 0))
+				results.push(<EmptyResults search={this.state.value} key="0" />);
+			
+			return (
+				<div>
+					<div className="form-group">
+						<label htmlFor="search-input">Search for a Member Here</label>
+						<input type="text" className="form-control input-lg" id="search-input" ref="searchInput"
+							value={this.state.value} onChange={this.handleChange}
+							placeholder="Search..."  />
+							<p className="help-block">Try searching for <em><strong>00984</strong></em>, <em><strong>garcia j</strong></em>
+							, <em><strong>jane garcia</strong></em>, or <em><strong>jane</strong></em>
+							</p>
+					</div>
+					<div id="results" className="row">
+						{results}
+					</div>
+				</div>
+			);
+		}
+		
+		componentDidMount(){
+			ReactDOM.findDOMNode(this.refs.searchInput).focus(); 
+		}
+	};
+	
 	$(document).ready(function() {
 		var memberid = '00001';
 		services = new Services(
@@ -257,71 +155,15 @@
 			Config.ChaosMonkeyOdds
 			);
 
-		services.getBasicInformation(
-			memberid,
-			function(response) {
-				try {
-					var member = JSON.parse(response.body).Item;
-					ReactDOM.render(
-						<BasicInfo member={member} />,
-						document.getElementById('basic-info')
-						);
-				} catch(e) {
-					handleError(document.getElementById('basic-info'), 'Basic Information', response);
-				}},
-			function(x,s,e) {
-				handleError(document.getElementById('basic-info'), 'Basic Information', e);
-			});
-		
-		services.getMilitaryService(
-			memberid,
-			function(response) {
-				try {
-					var member = JSON.parse(response.body).Item;
-					ReactDOM.render(
-						<MilitaryService member={member} />,
-						document.getElementById('military-service')
-						);
-				} catch(e) {
-					handleError(document.getElementById('military-service'), 'Military Service', response);
-				}},
-			function(x,s,e) {
-				handleError(document.getElementById('military-service'), 'Military Service', e);
-			});
-		
-		services.getIdentifications(
-			memberid,
-			function(response) {
-				try {
-					var member = JSON.parse(response.body).Item;
-					ReactDOM.render(
-						<Identifications member={member} />,
-						document.getElementById('identifications')
-						);
-				} catch(e) {
-					handleError(document.getElementById('identifications'), 'Identifications', response);
-				}},
-			function(x,s,e) {
-				handleError(document.getElementById('identifications'), 'Identifications', e);
-			});
-		
-		services.getProducts(
-			memberid,
-			function(response) {
-				try {
-					var member = JSON.parse(response.body).Item;
-					ReactDOM.render(
-						<Products member={member} />,
-						document.getElementById('products')
-						);
-				} catch(e) {
-					handleError(document.getElementById('products'), 'Products', response);
-				}},
-			function(x,s,e) {
-				handleError(document.getElementById('products'), 'Products', e);
-			});
+			ReactDOM.render(
+				<SearchModule />,
+				document.getElementById('search-form')
+				)
 	});
 	</script>
+	<style>
+	#results > .media:first-child { margin-top: 15px; }
+	</style>
   </head>
   <body>
   	<div class="container-fluid">
@@ -329,20 +171,9 @@
     		MSR Window
     	</h1>
 		<hr />
-		
-		<div id="basic-info" class="panel"></div>
-		
-		<div class="row">
-			<div class="col-md-6">
-				<div id="military-service" class="panel"></div>
-				<div id="identifications" class="panel"></div>
-			</div>
-			<div class="col-md-6">
-				<div id="products" class="panel"></div>
-			</div>
-		</div>
-		
-		
-   </div>
+	</div>
+	<div class="container">
+		<form id="search-form"></form>
+	</div>
   </body>
 </html>
