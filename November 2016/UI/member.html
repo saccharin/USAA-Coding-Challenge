@@ -231,10 +231,13 @@
 	};
 	
 	function handleError(element, type, error, xhr) {
+		console.error(error);
+		if(xhr) console.error(xhr);
 		
 		function toString(err, messages) {
-			if(typeof error === 'string') {
-				messages.push(error);
+			
+			if(typeof err === 'string') {
+				messages.push(err);
 				return;
 			}
 			for(var prop in err) {
@@ -244,7 +247,7 @@
 						return toString(error[prop], messages);
 					
 					parsed = JSON.parse(error[prop]);
-					//console.log(parsed);
+					
 					if(typeof parsed == 'object')
 						toString(parsed, messages);
 					else
