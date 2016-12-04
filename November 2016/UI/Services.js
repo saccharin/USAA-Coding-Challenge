@@ -9,17 +9,42 @@ class Services {
 	}
 	
 	getServiceUrl(api, service) {
-		var svc = this.baseUrl + api;
+		var svc = this.baseUrl + api + '?';
+		
+		var extras = [];
 		if(service)
-			svc += '?service=' + service;
+			extras.push('service=' + service);
+		if(this.chaosMonkey && this.chaosMonkey > 0)
+			extras.push('chaosMonkey=' + chaosMonkey.toString());
+		
+		svc = svc + extras.join('&');
+		
 		return svc;
 	}
 	
-	buildAjaxRequest(url, id, onSuccess, onError) {
+	buildAjaxRequest(url, id, onSuccess, onError, data) {
+		var body = data || {};
+		body.id = id;
+		//body.chaosMonkey = this.chaosMonkey;
+		
 		return {
 			url: url,
 			method: 'GET',
-			data: { id: id, chaosMonkey: this.chaosMonkey },
+			data: body,
+			contentType: 'application/json',
+			headers: { 'x-api-key': this.apiKey },
+			success: onSuccess,
+			error: onError
+		};
+	}
+	buildAjaxPutRequest(url, onSuccess, onError, data) {
+		data = data || {};
+		data.chaosMonkey = this.chaosMonkey;
+		
+		return {
+			url: url,
+			type: 'PUT',
+			data: JSON.stringify(data),
 			contentType: 'application/json',
 			headers: { 'x-api-key': this.apiKey },
 			success: onSuccess,
@@ -52,6 +77,20 @@ class Services {
 		$.ajax(this.buildAjaxRequest(
 			this.getServiceUrl('member-information', 'products'),
 			id, onSuccess, onError)
+			);
+	}
+	
+	getEmployment(id, onSuccess, onError) {
+		$.ajax(this.buildAjaxRequest(
+			this.getServiceUrl('member-information', 'employmentinformation'),
+			id, onSuccess, onError)
+			);
+	}
+	putEmployment(id, data, onSuccess, onError) {
+		console.log(arguments);
+		$.ajax(this.buildAjaxPutRequest(
+			this.getServiceUrl('member-information', 'employmentinformation'),
+			onSuccess, onError, data)
 			);
 	}
 	

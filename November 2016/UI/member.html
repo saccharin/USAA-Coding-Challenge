@@ -51,7 +51,7 @@
 						</h2>
 					</div>
 					<div className="panel-body row">
-						<div className="col-md-4">
+						<div className="col-md-6">
 							<h4>Personal Information</h4>
 							<dl className="dl-horizontal">
 								<dt>Gender</dt>
@@ -64,7 +64,7 @@
 								<dd>{this.props.member.marital_status}</dd>
 							</dl>
 						</div>
-						<div className="col-md-4">
+						<div className="col-md-6">
 							<h4>Contact Information</h4>
 							<dl className="dl-horizontal">
 								<dt>Home Phone Number</dt>
@@ -79,15 +79,6 @@
 										{this.props.member.country} ({this.props.member.country_code})
 									</address>
 								</dd>
-							</dl>
-						</div>
-						<div className="col-md-4">
-							<h4>Employment Information</h4>
-							<dl className="dl-horizontal">
-								<dt>Occupation</dt>
-								<dd>{this.props.member.occupation}</dd>
-								<dt>Employer</dt>
-								<dd>{this.props.member.employer}</dd>
 							</dl>
 						</div>
 					</div>
@@ -230,6 +221,159 @@
 		}
 	};
 	
+	class EmploymentInfo extends React.Component {
+		constructor(props) {
+			super(props);
+			this.state = {
+				id: props.member.id, 
+				changed: false,
+				newValue: JSON.parse(JSON.stringify(props.member)),
+				oldValue: props.member,
+				mode: 'render'
+			};
+			this.mode = 'render';
+			
+			this.handleToggleMode = this.handleToggleMode.bind(this);
+			this.handleChange = this.handleChange.bind(this);
+			this.handleCancel = this.handleCancel.bind(this);
+			this.handleSubmit = this.handleSubmit.bind(this);
+		}
+		
+		handleToggleMode(event) {
+			this.setState({
+				mode: (this.state.mode === 'render' ? 'edit' : 'render')
+			});
+		}
+		
+		handleChange(event) {
+			this.setState({
+				changed: true //Utils.deepCompare.compare2Objects(),
+			});
+			
+			var newValue = this.state.newValue;
+			
+			newValue.occupation = this.refs.occupation.value;
+			newValue.employer = this.refs.employer.value;
+			
+			this.setState({
+				newValue: newValue
+			});
+			
+		}
+		
+		handleCancel(event) {
+			this.setState({
+				newValue: JSON.parse(JSON.stringify(this.state.oldValue))
+			});
+			this.handleToggleMode();
+		}
+		
+		handleSubmit(event) {
+			if(!this.state.changed) {
+				alert("No change detected!");
+				return false;
+			}
+			
+			services.putEmployment(
+				this.state.id,
+				this.state.newValue,
+				_ => {
+					services.getEmployment(
+						this.state.id,
+						(response) => {
+							try {
+								var member = response.body.Item;
+								ReactDOM.render(
+									<EmploymentInfo member={member} />,
+									document.getElementById('employment')
+									);
+								this.handleToggleMode();
+							} catch(e) {
+								
+								console.error({
+									e: e
+								});
+								//handleError(document.getElementById('edit-employment'), 'Employment', response);
+							}},
+						function(x,s,e) {
+							console.error({
+								x: x,
+								s: x,
+								e: e
+							});
+							//handleError(document.getElementById('edit-employment'), 'Employment', e, x);
+						});
+				},
+				function(x,s,e) {
+		
+					console.error({
+						x: x,
+						s: x,
+						e: e
+					});
+				}
+				);
+			
+		}
+		
+		render() {
+			if(this.state.mode === 'render') {
+				return (
+					<div className="panel panel-default">
+						<div className="panel-heading">
+							<h3>
+								<button onClick={this.handleToggleMode} 
+									className="btn btn-default pull-right">Edit</button>
+								Employment Information
+							</h3>
+						</div>
+						<div className="panel-body">
+							<dl className="dl-horizontal">
+								<dt>Occupation</dt>
+								<dd>{this.props.member.occupation}</dd>
+								<dt>Employer</dt>
+								<dd>{this.props.member.employer}</dd>
+							</dl>
+						</div>
+					</div>
+				);
+			} else {
+				return (
+					<div className="panel panel-default">
+						<div className="panel-heading" ref="heading">
+							<h3>Employment Information</h3>
+						</div>
+						<div className="panel-body" ref="body">
+							<form className="form-horizontal">
+								<div className="form-group">
+									<label htmlFor="occupation" className="col-sm-2 control-label">Occupation</label>
+									<div className="col-sm-10">
+									  <input className="form-control" type="text" id="occupation" name="occupation" 
+										value={this.state.newValue.occupation} ref="occupation" 
+										onChange={this.handleChange} />
+									</div>
+								</div>
+								<div className="form-group">
+									<label htmlFor="employer" className="col-sm-2 control-label">Employer</label>
+									<div className="col-sm-10">
+									  <input className="form-control" type="text" id="employer" name="employer" 
+										value={this.state.newValue.employer} ref="employer" 
+										onChange={this.handleChange} />
+									</div>
+								</div>
+							</form>
+						</div>
+						<div className="panel-footer" ref="footer">
+							<button onClick={this.handleSubmit} className="btn btn-primary pull-right">Save</button>
+							<button onClick={this.handleCancel} className="btn btn-link">Cancel</button>
+						</div>
+					</div>
+				);
+			
+			}
+		}
+	};
+	
 	function handleError(element, type, error, xhr) {
 		console.error(error);
 		if(xhr) console.error(xhr);
@@ -346,6 +490,27 @@
 			function(x,s,e) {
 				handleError(document.getElementById('products'), 'Products', e, x);
 			});
+		
+		
+		services.getEmployment(
+			memberid,
+			function(response) {
+				try {
+					var member = response.body.Item;
+					ReactDOM.render(
+						<EmploymentInfo member={member} />,
+						document.getElementById('employment')
+						);
+					//ReactDOM.render(
+					//	<EditEmploymentInfo member={member} />,
+					//	document.getElementById('edit-employment')
+					//	);
+				} catch(e) {
+					handleError(document.getElementById('products'), 'Products', response);
+				}},
+			function(x,s,e) {
+				handleError(document.getElementById('products'), 'Products', e, x);
+			});
 	});
 	</script>
   </head>
@@ -364,6 +529,7 @@
 				<div id="identifications" class="panel"></div>
 			</div>
 			<div class="col-md-6">
+				<div id="employment" class="panel"></div>
 				<div id="products" class="panel"></div>
 			</div>
 		</div>
