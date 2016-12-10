@@ -221,151 +221,105 @@
 		}
 	};
 	
-	class EmploymentInfo extends React.Component {
+	class MemberNotFound extends React.Component {
+		render() {
+			return (
+				<div className="panel panel-warning">
+					<div className="panel-heading">
+						<h3>Member Not Found</h3>
+					</div>
+					<div className="panel-body">
+						<h4>We could not find the member that you were searching for</h4>
+						<p>Please return to <a href="index.html">the Search Page</a> to search for another member.</p>
+					</div>
+				</div>
+			);
+		}
+	};
+	
+	class RowInput extends React.Component {
 		constructor(props) {
 			super(props);
-			this.state = {
-				id: props.member.id, 
-				changed: false,
-				newValue: JSON.parse(JSON.stringify(props.member)),
-				oldValue: props.member,
-				mode: 'render'
-			};
-			this.mode = 'render';
 			
-			this.handleToggleMode = this.handleToggleMode.bind(this);
 			this.handleChange = this.handleChange.bind(this);
-			this.handleCancel = this.handleCancel.bind(this);
-			this.handleSubmit = this.handleSubmit.bind(this);
-		}
-		
-		handleToggleMode(event) {
-			this.setState({
-				mode: (this.state.mode === 'render' ? 'edit' : 'render')
-			});
 		}
 		
 		handleChange(event) {
-			this.setState({
-				changed: true //Utils.deepCompare.compare2Objects(),
-			});
-			
-			var newValue = this.state.newValue;
-			
-			newValue.occupation = this.refs.occupation.value;
-			newValue.employer = this.refs.employer.value;
-			
-			this.setState({
-				newValue: newValue
-			});
-			
-		}
-		
-		handleCancel(event) {
-			this.setState({
-				newValue: JSON.parse(JSON.stringify(this.state.oldValue))
-			});
-			this.handleToggleMode();
-		}
-		
-		handleSubmit(event) {
-			if(!this.state.changed) {
-				alert("No change detected!");
-				return false;
-			}
-			
-			services.putEmployment(
-				this.state.id,
-				this.state.newValue,
-				_ => {
-					services.getEmployment(
-						this.state.id,
-						(response) => {
-							try {
-								var member = response.body.Item;
-								ReactDOM.render(
-									<EmploymentInfo member={member} />,
-									document.getElementById('employment')
-									);
-								this.handleToggleMode();
-							} catch(e) {
-								
-								console.error({
-									e: e
-								});
-								//handleError(document.getElementById('edit-employment'), 'Employment', response);
-							}},
-						function(x,s,e) {
-							console.error({
-								x: x,
-								s: x,
-								e: e
-							});
-							//handleError(document.getElementById('edit-employment'), 'Employment', e, x);
-						});
-				},
-				function(x,s,e) {
-		
-					console.error({
-						x: x,
-						s: x,
-						e: e
-					});
-				}
-				);
-			
+			this.props.onChange(this.props.propertyName, this.textInput.value);
 		}
 		
 		render() {
-			if(this.state.mode === 'render') {
+			if(this.props.mode === 'render') {
 				return (
-					<div className="panel panel-default">
-						<div className="panel-heading">
-							<h3>
-								<button onClick={this.handleToggleMode} 
-									className="btn btn-default pull-right">Edit</button>
-								Employment Information
-							</h3>
-						</div>
-						<div className="panel-body">
-							<dl className="dl-horizontal">
-								<dt>Occupation</dt>
-								<dd>{this.props.member.occupation}</dd>
-								<dt>Employer</dt>
-								<dd>{this.props.member.employer}</dd>
-							</dl>
-						</div>
+					<div>
+						<dt>{this.props.name}</dt>
+						<dd>{this.props.value}</dd>
 					</div>
 				);
 			} else {
+				var id = 'value_' + this.props.propertyName;
+				var errors = (this.props.errors || []).join('<br />')
+				
 				return (
-					<div className="panel panel-default">
-						<div className="panel-heading" ref="heading">
-							<h3>Employment Information</h3>
+					<div className="form-group">
+						<label htmlFor={id} className="col-sm-4 control-label">
+							{this.props.name}
+						</label>
+						<div className="col-sm-8">
+						  <input className="form-control" type="text" id={id} name={id} 
+							value={this.props.value} 
+							ref={(input) => { this.textInput = input; }}
+							onChange={this.handleChange} />
+							<p className="text-danger">{errors}</p>
 						</div>
-						<div className="panel-body" ref="body">
-							<form className="form-horizontal">
-								<div className="form-group">
-									<label htmlFor="occupation" className="col-sm-2 control-label">Occupation</label>
-									<div className="col-sm-10">
-									  <input className="form-control" type="text" id="occupation" name="occupation" 
-										value={this.state.newValue.occupation} ref="occupation" 
-										onChange={this.handleChange} />
-									</div>
-								</div>
-								<div className="form-group">
-									<label htmlFor="employer" className="col-sm-2 control-label">Employer</label>
-									<div className="col-sm-10">
-									  <input className="form-control" type="text" id="employer" name="employer" 
-										value={this.state.newValue.employer} ref="employer" 
-										onChange={this.handleChange} />
-									</div>
-								</div>
-							</form>
-						</div>
-						<div className="panel-footer" ref="footer">
-							<button onClick={this.handleSubmit} className="btn btn-primary pull-right">Save</button>
-							<button onClick={this.handleCancel} className="btn btn-link">Cancel</button>
+					</div>
+				);
+			
+			}
+		}
+	};
+	class RowSelect extends React.Component {
+		constructor(props) {
+			super(props);
+			
+			this.handleChange = this.handleChange.bind(this);
+		}
+		
+		handleChange(event) {
+			this.props.onChange(this.props.propertyName, this.textInput.value);
+		}
+		
+		render() {
+			if(this.props.mode === 'render') {
+				return (
+					<div>
+						<dt>{this.props.name}</dt>
+						<dd>{this.props.value}</dd>
+					</div>
+				);
+			} else {
+				var id = 'value_' + this.props.propertyName;
+				
+				var options = [];
+				for(var i=0,option;option=this.props.options[i];i++) {
+					options.push(
+						<option value={option} key={i}>{option}</option>
+						);
+				}
+				
+				
+				return (
+					<div className="form-group">
+						<label htmlFor={id} className="col-sm-4 control-label">
+							{this.props.name}
+						</label>
+						<div className="col-sm-8">
+						  <select className="form-control" type="text" id={id} name={id} 
+							value={this.props.value} 
+							ref={(input) => { this.textInput = input; }}
+							onChange={this.handleChange}>
+							{options}
+						</select>
 						</div>
 					</div>
 				);
@@ -374,9 +328,235 @@
 		}
 	};
 	
+	class InfoBox extends React.Component {
+		constructor(props) {
+			super(props);
+			this.state = {
+				id: props.member.id, 
+				changed: false,
+				changeError: '',
+				newValue: JSON.parse(JSON.stringify(props.member)),
+				oldValue: props.member,
+				mode: 'render'
+			};
+			
+			this.handleToggleMode = this.handleToggleMode.bind(this);
+			this.handleChange = this.handleChange.bind(this);
+			this.handleCancel = this.handleCancel.bind(this);
+			this.handleSubmit = this.handleSubmit.bind(this);
+		}
+		
+		handleToggleMode(event) {
+			var mode = this.state.mode === 'render' ? 'edit' : 'render';
+
+			this.setState({
+				mode: mode
+			});
+		}
+		
+		handleChange(property, value) {
+			console.log({ value: value, property: property });
+			
+			var newValue = this.state.newValue;
+			
+			newValue[property] = value;
+			
+			this.setState({
+				changed: true,
+				newValue: newValue,
+				changeError: ''
+			});
+		}
+		
+		handleCancel(event) {
+			this.setState({
+				newValue: JSON.parse(JSON.stringify(this.state.oldValue)),
+				changeError: ''
+			});
+			this.handleToggleMode();
+		}
+		
+		handleValidationError(errors) {
+			
+		}
+		
+		handleSubmit(event) {
+			if(!this.state.changed) {
+				this.setState({
+					changeError: 'No change detected'
+				});
+				return false;
+			}
+			this.putData(this.state.id, this.state.newValue, _ => { this.getData() }, 
+				function(x,s,e) {
+					console.error({
+						x: x,
+						s: x,
+						e: e
+					});
+				});
+		}
+		
+		render() {
+			var isEdit = this.state.mode === 'edit';
+			var i = 0;
+			var rows = this.getRows();
+			return (
+				<div className="panel panel-default">
+					<div className="panel-heading" ref="heading">
+						<h3>
+							<button onClick={this.handleToggleMode} 
+								className="btn btn-default pull-right">Edit</button>
+							{this.getTitle()}
+						</h3>
+					</div>
+					<div className="panel-body" ref="body">
+						{ isEdit ? (
+						<form className="form-horizontal"> 
+							{rows}
+						</form>
+						) : ( 
+						<dl className="dl-horizontal"> 
+							{rows}
+						</dl> 
+						) }
+					</div>
+					{ isEdit && (
+					<div className="panel-footer" ref="footer">
+						<div className="pull-right">
+							<p className="text-danger">
+								{this.state.changeError}
+								&nbsp;&nbsp;
+								<button onClick={this.handleSubmit} className="btn btn-primary">Save</button>
+							</p>
+						</div>
+						<button onClick={this.handleCancel} className="btn btn-link">Cancel</button>
+					</div>
+					)}
+				</div>
+			);
+		
+		}
+	};
+	
+	class EmploymentInfo extends InfoBox
+	{
+		getData() {	
+			services.getEmployment(
+				this.state.id,
+				(response) => {
+					renderEmploymentInformation(response);
+					this.handleToggleMode()
+				},
+				function(x,s,e) {
+					console.error({
+						x: x,
+						s: x,
+						e: e
+					});
+					//handleError(document.getElementById('edit-employment'), 'Employment', e, x);
+				});
+		}
+		
+		getRows() {
+			var i=0;
+			return [
+				<RowInput mode={this.state.mode} value={this.state.newValue.occupation} name="Occupation" propertyName="occupation" onChange={this.handleChange} key={i++} />,
+				<RowInput mode={this.state.mode} value={this.state.newValue.employer} name="Employer" propertyName="employer" onChange={this.handleChange} key={i++} />
+			];
+		}
+		getTitle() {
+			return 'Employment Information';
+		}
+		putData(a,b,c,d) {
+			return services.putEmployment(a,b,c,d);
+		}
+	};
+	class ContactInformation extends InfoBox
+	{
+		getData() {	
+			services.getContactInformation(
+				this.state.id,
+				(response) => {
+					renderContactInformation(response);
+					this.handleToggleMode()
+				},
+				function(x,s,e) {
+					console.error({
+						x: x,
+						s: x,
+						e: e
+					});
+					//handleError(document.getElementById('edit-employment'), 'Employment', e, x);
+				});
+		}
+		
+		getRows() {
+			var i=0;
+			return [
+				<RowInput mode={this.state.mode} value={this.state.newValue.email} name="Email" propertyName="email" onChange={this.handleChange} key={i++} />,
+				<RowInput mode={this.state.mode} value={this.state.newValue.street_address} name="Street Address" propertyName="street_address" onChange={this.handleChange} key={i++} />,
+				<RowSelect mode={this.state.mode} value={this.state.newValue.state} name="State" propertyName="state" onChange={this.handleChange} key={i++} 
+					options={Utils.getStates()} />,
+				<RowInput mode={this.state.mode} value={this.state.newValue.home_phone} name="Home Phone Number" propertyName="home_phone" onChange={this.handleChange} key={i++} />,
+				<RowInput mode={this.state.mode} value={this.state.newValue.city} name="City" propertyName="city" onChange={this.handleChange} key={i++} />,
+				<RowInput mode={this.state.mode} value={this.state.newValue.country} name="Country" propertyName="country" onChange={this.handleChange} key={i++} />,
+				<RowInput mode={this.state.mode} value={this.state.newValue.country_code} name="Country Code" propertyName="country_code" onChange={this.handleChange} key={i++} />
+			];
+		}
+		getTitle() {
+			return 'Contact Information';
+		}
+		putData(a,b,c,d) {
+			return services.putContactInformation(a,b,c,d);
+		}
+	};
+	class PersonalInformation extends InfoBox
+	{
+		getData() {	
+			services.getPersonalInformation(
+				this.state.id,
+				(response) => {
+					renderPersonalInformation(response);
+					this.handleToggleMode()
+				},
+				function(x,s,e) {
+					console.error({
+						x: x,
+						s: x,
+						e: e
+					});
+					//handleError(document.getElementById('edit-employment'), 'Personal', e, x);
+				});
+		}
+		
+		getRows() {
+			var i=0;
+			return [
+				<RowInput mode={this.state.mode} value={this.state.newValue.first_name} name="First Name" propertyName="first_name" onChange={this.handleChange} key={i++} />,
+				<RowInput mode={this.state.mode} value={this.state.newValue.last_name} name="Last Name" propertyName="last_name" onChange={this.handleChange} key={i++} />,
+				<RowInput mode={this.state.mode} value={this.state.newValue.dob} name="Date of Birth" propertyName="dob" onChange={this.handleChange} key={i++} />,
+				<RowInput mode={this.state.mode} value={this.state.newValue.ssn} name="Social Security Number" propertyName="ssn" onChange={this.handleChange} key={i++} />,
+				<RowSelect mode={this.state.mode} value={this.state.newValue.gender} name="Gender" propertyName="gender" onChange={this.handleChange} key={i++} 
+					options={['Male', 'Female']} />,
+				<RowSelect mode={this.state.mode} value={this.state.newValue.marital_status} name="Marital Status" propertyName="marital_status" onChange={this.handleChange} key={i++} 
+					options={['Single', 'Married', 'Divorced', 'Widowed']}/>
+			];
+		}
+		getTitle() {
+			return 'Personal Information';
+		}
+		putData(a,b,c,d) {
+			return services.putPersonalInformation(a,b,c,d);
+		}
+	};
+	
 	function handleError(element, type, error, xhr) {
-		console.error(error);
-		if(xhr) console.error(xhr);
+		if(xhr) 
+			console.error(xhr);
+		else
+			console.error(error);
+		
 		
 		function toString(err, messages) {
 			
@@ -407,7 +587,7 @@
 		
 		if(xhr) {
 			try {
-				var body = JSON.parse(JSON.parse(xhr.responseText).errorMessage).body;
+				var body = xhr.responseJSON;
 				toString(body, texts);
 			} catch (x) { }
 		}
@@ -419,14 +599,58 @@
 	}
 	
 	var services;
+	function renderEmploymentInformation(response) {
+		try {
+			var member = response.body.Item;
+			ReactDOM.render(
+				<EmploymentInfo member={member} />,
+				document.getElementById('employment')
+				);
+		} catch(e) {
+			handleError(document.getElementById('employment'), 'Employment', e, response);
+		}
+	}
+	function renderContactInformation(response) {
+		try {
+			var member = response.body.Item;
+			ReactDOM.render(
+				<ContactInformation member={member} />,
+				document.getElementById('contact')
+				);
+		} catch(e) {
+			handleError(document.getElementById('contact'), 'Contact Information', e, response);
+		}
+	}
+	function renderPersonalInformation(response) {
+		try {
+			var member = response.body.Item;
+			ReactDOM.render(
+				<PersonalInformation member={member} />,
+				document.getElementById('personal')
+				);
+		} catch(e) {
+			handleError(document.getElementById('personal'), 'Personal Information', e, response);
+		}
+	}
+
 	$(document).ready(function() {
 		var memberid = Utils.getParameterByName('id');
+		
+		if(memberid == null || memberid == "")
+		{
+			ReactDOM.render(
+				<MemberNotFound />,
+				document.getElementById('member-not-found')
+				);
+			return;
+		}
+		
 		services = new Services(
 			Config.ServiceResourceUrl,
 			Config.ApiKey,
 			Config.ChaosMonkeyOdds
 			);
-
+		/*
 		services.getBasicInformation(
 			memberid,
 			function(response) {
@@ -441,7 +665,7 @@
 				}},
 			function(x,s,e) {
 				handleError(document.getElementById('basic-info'), 'Basic Information', e, x);
-			});
+			});*/
 		
 		services.getMilitaryService(
 			memberid,
@@ -494,22 +718,23 @@
 		
 		services.getEmployment(
 			memberid,
-			function(response) {
-				try {
-					var member = response.body.Item;
-					ReactDOM.render(
-						<EmploymentInfo member={member} />,
-						document.getElementById('employment')
-						);
-					//ReactDOM.render(
-					//	<EditEmploymentInfo member={member} />,
-					//	document.getElementById('edit-employment')
-					//	);
-				} catch(e) {
-					handleError(document.getElementById('products'), 'Products', response);
-				}},
+			renderEmploymentInformation,
 			function(x,s,e) {
-				handleError(document.getElementById('products'), 'Products', e, x);
+				handleError(document.getElementById('employment'), 'Employment', e, x);
+			});
+			
+		services.getContactInformation(
+			memberid,
+			renderContactInformation,
+			function(x,s,e) {
+				handleError(document.getElementById('contact'), 'Contact Information', e, x);
+			});
+			
+		services.getPersonalInformation(
+			memberid,
+			renderPersonalInformation,
+			function(x,s,e) {
+				handleError(document.getElementById('personal'), 'Personal Information', e, x);
 			});
 	});
 	</script>
@@ -521,7 +746,19 @@
     	</h1>
 		<hr />
 		
-		<div id="basic-info" class="panel"></div>
+		<div id="member-not-found"></div>
+		<!--<div id="basic-info" class="panel"></div>-->
+		<div class="row">
+			<div class="col-md-4">
+				<div id="personal" class="panel"></div>
+			</div>
+			<div class="col-md-4">
+				<div id="contact" class="panel"></div>
+			</div>
+			<div class="col-md-4">
+				<div id="employment" class="panel"></div>
+			</div>
+		</div>
 		
 		<div class="row">
 			<div class="col-md-6">
@@ -529,7 +766,6 @@
 				<div id="identifications" class="panel"></div>
 			</div>
 			<div class="col-md-6">
-				<div id="employment" class="panel"></div>
 				<div id="products" class="panel"></div>
 			</div>
 		</div>

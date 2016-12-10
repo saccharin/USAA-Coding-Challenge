@@ -15,7 +15,7 @@ class Services {
 		if(service)
 			extras.push('service=' + service);
 		if(this.chaosMonkey && this.chaosMonkey > 0)
-			extras.push('chaosMonkey=' + chaosMonkey.toString());
+			extras.push('chaosMonkey=' + this.chaosMonkey.toString());
 		
 		svc = svc + extras.join('&');
 		
@@ -73,6 +73,7 @@ class Services {
 			);
 	}
 	
+	
 	getProducts(id, onSuccess, onError) {
 		$.ajax(this.buildAjaxRequest(
 			this.getServiceUrl('member-information', 'products'),
@@ -90,6 +91,34 @@ class Services {
 		console.log(arguments);
 		$.ajax(this.buildAjaxPutRequest(
 			this.getServiceUrl('member-information', 'employmentinformation'),
+			onSuccess, onError, data)
+			);
+	}
+	
+	getContactInformation(id, onSuccess, onError) {
+		$.ajax(this.buildAjaxRequest(
+			this.getServiceUrl('member-information', 'contactinformation'),
+			id, onSuccess, onError)
+			);
+	}
+	putContactInformation(id, data, onSuccess, onError) {
+		console.log(arguments);
+		$.ajax(this.buildAjaxPutRequest(
+			this.getServiceUrl('member-information', 'contactinformation'),
+			onSuccess, onError, data)
+			);
+	}
+	
+	getPersonalInformation(id, onSuccess, onError) {
+		$.ajax(this.buildAjaxRequest(
+			this.getServiceUrl('member-information', 'personalinformation'),
+			id, onSuccess, onError)
+			);
+	}
+	putPersonalInformation(id, data, onSuccess, onError) {
+		console.log(arguments);
+		$.ajax(this.buildAjaxPutRequest(
+			this.getServiceUrl('member-information', 'personalinformation'),
 			onSuccess, onError, data)
 			);
 	}

@@ -59,7 +59,11 @@
 	class EmptyResults extends React.Component {
 		render() {
 			return (
-				<p><em>We found no search results for <strong>{this.props.search}</strong></em></p>
+				<div className="panel panel-default">
+					<div className="panel-body">
+						<h4><em>We found no search results for <strong>{this.props.search}</strong></em></h4>
+					</div>
+				</div>
 			);
 		}
 	};
@@ -75,11 +79,6 @@
 			
 			this.handleChange = this.handleChange.bind(this);
 		}
-		
-		//getRandomPlaceholder() {
-		//	var placeholders = ['00100', 'chris', 'dunn', 'dunn, chris', 'chris dunn'];
-		//	return placeholders[Math.floor(Math.random() * placeholders.length)];
-		//}
 		
 		handleChange(event) {
 			this.setState({
