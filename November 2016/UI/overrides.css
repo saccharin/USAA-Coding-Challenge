@@ -1,0 +1,11 @@
+.form-group {
+	margin-bottom: 5px;
+}
+.footer-logo {
+	box-shadow: 2px 2px 16px #ccc, 1px 1px 3px #aaa;
+	width: 64px;
+	margin-bottom: 32px;
+}
+.min-height {
+	min-height: 400px;
+}

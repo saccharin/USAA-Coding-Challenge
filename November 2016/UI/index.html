@@ -4,12 +4,15 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>MSR Window</title>
+    <title>MSR Pulse</title>
 
 	<!-- Bootstrap -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+	<!-- Bootstrap Overrides -->
+	<link rel="stylesheet" href="overrides.css">
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -64,6 +67,14 @@
 						<h4><em>We found no search results for <strong>{this.props.search}</strong></em></h4>
 					</div>
 				</div>
+			);
+		}
+	};
+	
+	class Waiting extends React.Component {
+		render() {
+			return (
+				<img src="imgs/waiting.gif" className="center-block" />
 			);
 		}
 	};
@@ -123,6 +134,9 @@
 				(this.state.value || this.state.value.trim().length > 0))
 				results.push(<EmptyResults search={this.state.value} key="0" />);
 			
+			if(this.state.searching)
+				results = [<Waiting key="0" />];
+			
 			return (
 				<div>
 					<div className="form-group">
@@ -165,14 +179,27 @@
 	</style>
   </head>
   <body>
-  	<div class="container-fluid">
-	    <h1>
-    		MSR Window
-    	</h1>
-		<hr />
-	</div>
-	<div class="container">
+  	<nav class="navbar navbar-default">
+	  <div class="container-fluid">
+		<div class="navbar-header">
+			<a class="navbar-brand" href="index.html">
+				<span><img src="imgs/logo.png" height="18px" /></span>
+				MSR Pulse
+			</a>
+    	</div>
+	  </div>
+	</nav>
+	<div class="container min-height">
 		<form id="search-form"></form>
 	</div>
+	
+	<hr />
+	<div class="text-center text-muted">
+		<p><small>Built by 
+			<a href="https://www.instagram.com/wafulcopter/" target="_blank">Chris Waful</a>
+		</small></p>
+	</div>
+	<img src="imgs/logo.png" class="center-block img-circle footer-logo" />
+	
   </body>
 </html>

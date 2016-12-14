@@ -4,12 +4,15 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>MSR Window</title>
+    <title>MSR Pulse</title>
 
 	<!-- Bootstrap -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+	
+	<!-- Bootstrap Overrides -->
+	<link rel="stylesheet" href="overrides.css">
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -258,7 +261,14 @@
 				);
 			} else {
 				var id = 'value_' + this.props.propertyName;
-				var errors = (this.props.errors || []).join('<br />')
+				var errors = (this.props.errors || {});
+				var error = null;
+				if(errors.hasOwnProperty(this.props.propertyName)) {
+					var errs = errors[this.props.propertyName];
+					if(errs.length > 0) {
+						error = errs.join('\n');
+					}
+				}
 				
 				return (
 					<div className="form-group">
@@ -266,11 +276,15 @@
 							{this.props.name}
 						</label>
 						<div className="col-sm-8">
-						  <input className="form-control" type="text" id={id} name={id} 
+						  <input className="form-control" type="text" 
+							autoComplete="off"
+							id={id} name={id} 
 							value={this.props.value} 
 							ref={(input) => { this.textInput = input; }}
 							onChange={this.handleChange} />
-							<p className="text-danger">{errors}</p>
+							{error && 
+							<small className="text-danger">{error}</small>
+							}
 						</div>
 					</div>
 				);
@@ -299,6 +313,14 @@
 				);
 			} else {
 				var id = 'value_' + this.props.propertyName;
+				var errors = (this.props.errors || {});
+				var error = null;
+				if(errors.hasOwnProperty(this.props.propertyName)) {
+					var errs = errors[this.props.propertyName];
+					if(errs.length > 0) {
+						error = errs.join('\n');
+					}
+				}
 				
 				var options = [];
 				for(var i=0,option;option=this.props.options[i];i++) {
@@ -319,7 +341,8 @@
 							ref={(input) => { this.textInput = input; }}
 							onChange={this.handleChange}>
 							{options}
-						</select>
+						  </select>
+						  <small className="text-danger">{error}</small>
 						</div>
 					</div>
 				);
@@ -331,19 +354,26 @@
 	class InfoBox extends React.Component {
 		constructor(props) {
 			super(props);
+			
 			this.state = {
-				id: props.member.id, 
+				id: props.memberid,
 				changed: false,
 				changeError: '',
-				newValue: JSON.parse(JSON.stringify(props.member)),
-				oldValue: props.member,
-				mode: 'render'
+				mode: 'render',
+				progress: 0
 			};
 			
 			this.handleToggleMode = this.handleToggleMode.bind(this);
 			this.handleChange = this.handleChange.bind(this);
 			this.handleCancel = this.handleCancel.bind(this);
 			this.handleSubmit = this.handleSubmit.bind(this);
+			this.handleRetrieve = this.handleRetrieve.bind(this);
+			this.handleError = this.handleError.bind(this);
+			
+		}
+		
+		componentDidMount() {
+			this.handleRetrieve();
 		}
 		
 		handleToggleMode(event) {
@@ -355,8 +385,6 @@
 		}
 		
 		handleChange(property, value) {
-			console.log({ value: value, property: property });
-			
 			var newValue = this.state.newValue;
 			
 			newValue[property] = value;
@@ -368,16 +396,75 @@
 			});
 		}
 		
+		handleRetrieve() {
+			this.setState({
+				masterError: null,
+				errors: null,
+				oldValue: null,
+				newValue: null
+			});
+			
+			
+			this.props.retrieveMethod.call(
+				this.props.services,
+				this.state.id,
+				(response) => {
+					var member = response.body.Item;
+					this.setState({
+						newValue: JSON.parse(JSON.stringify(member)),
+						oldValue: member
+					});
+				},
+				(x,s,e) => {
+					console.error({
+						x: x,
+						s: x,
+						e: e
+					});
+					this.handleError(x);
+				});
+		}
+		
 		handleCancel(event) {
 			this.setState({
 				newValue: JSON.parse(JSON.stringify(this.state.oldValue)),
-				changeError: ''
+				changeError: '',
+				errors: null,
+				masterError: null
 			});
 			this.handleToggleMode();
 		}
 		
 		handleValidationError(errors) {
+			this.setState({
+				masterError: errors.message,
+				errors: errors.details
+			});
+		}
+		
+		handleError(error, line1) {
+			console.log(error);
+			var text = '';
+			if(typeof error === 'string')
+				text = error;
+			else if(error.responseJSON) {
+				if(error.responseJSON.message)
+					text = error.responseJSON.message;
+				else
+					text = error.responseText;
+			}
+			else if(error.message) {
+				text = error.message;
+			}
+			else
+				text = JSON.stringify(error);
 			
+			this.setState({
+				masterError:
+					(line1 
+						? line1 + '\n' + text
+						: text)
+			});
 		}
 		
 		handleSubmit(event) {
@@ -387,19 +474,86 @@
 				});
 				return false;
 			}
-			this.putData(this.state.id, this.state.newValue, _ => { this.getData() }, 
+			this.setState({
+				masterError: null,
+				errors: null,
+				progress: 0,
+				interval: setInterval(_ => {
+					var p = this.state.progress;
+					p++;
+					if(p > 100) {
+						clearInterval(this.state.interval);
+						this.state.interval = null;
+					}
+					
+					this.setState({ progress: p });
+				}, 1)
+			});
+			var self = this;
+			console.log(this);
+			
+			this.props.putMethod.call(
+				this.props.services,
+				this.state.id,
+				this.state.newValue,
+				_ => {
+					this.setState({ mode: 'render' });
+					this.handleRetrieve();
+				},
 				function(x,s,e) {
 					console.error({
 						x: x,
-						s: x,
+						s: s,
 						e: e
 					});
+					
+					clearInterval(self.state.interval);
+					self.state.interval = null;
+					
+					switch(x.status) {
+						
+						// bad validation
+						case 400:
+							self.handleValidationError(x.responseJSON);
+							break;
+						
+						// server error
+						default:
+							self.handleError(x.responseJSON || (x.responseText || x.statusText),
+								'Your changes were not saved: ');
+							break;
+					}
 				});
 		}
 		
 		render() {
+			if(this.state.oldValue == null)
+				return (
+				<div className="panel panel-default">
+					<div className="panel-heading" ref="heading">
+						<h3>
+							{this.getTitle()}
+						</h3>
+					</div>
+					<div className="panel-body" ref="body">
+						<img src="imgs/waiting.gif" className="center-block" />
+						{ this.state.masterError &&
+						<div>
+							<h4 className="text-danger">{ this.state.masterError }</h4>
+							<button className="btn btn-link center-block" onClick={this.handleRetrieve}>
+								<span className="glyphicon glyphicon-refresh">&nbsp;</span>
+								Click here to refresh {this.getTitle()}.
+							</button>
+						</div>
+						}
+					</div>
+				</div>
+				);
+			
 			var isEdit = this.state.mode === 'edit';
 			var i = 0;
+			var style = { width: this.state.progress + '%' };
+			
 			var rows = this.getRows();
 			return (
 				<div className="panel panel-default">
@@ -413,6 +567,14 @@
 					<div className="panel-body" ref="body">
 						{ isEdit ? (
 						<form className="form-horizontal"> 
+							{ this.state.interval &&
+							<div className="progress">
+								<div className="progress-bar" role="progressbar" aria-valuenow={this.state.progress} aria-valuemin="0" aria-valuemax="100" style={style}></div>
+							</div>
+							}
+							{ this.state.masterError &&
+							<p className="text-danger">{ this.state.masterError }</p>
+							}
 							{rows}
 						</form>
 						) : ( 
@@ -441,113 +603,53 @@
 	
 	class EmploymentInfo extends InfoBox
 	{
-		getData() {	
-			services.getEmployment(
-				this.state.id,
-				(response) => {
-					renderEmploymentInformation(response);
-					this.handleToggleMode()
-				},
-				function(x,s,e) {
-					console.error({
-						x: x,
-						s: x,
-						e: e
-					});
-					//handleError(document.getElementById('edit-employment'), 'Employment', e, x);
-				});
-		}
-		
 		getRows() {
 			var i=0;
 			return [
-				<RowInput mode={this.state.mode} value={this.state.newValue.occupation} name="Occupation" propertyName="occupation" onChange={this.handleChange} key={i++} />,
-				<RowInput mode={this.state.mode} value={this.state.newValue.employer} name="Employer" propertyName="employer" onChange={this.handleChange} key={i++} />
+				<RowInput mode={this.state.mode} value={this.state.newValue.occupation} name="Occupation" propertyName="occupation" onChange={this.handleChange} key={i++} errors={this.state.errors} />,
+				<RowInput mode={this.state.mode} value={this.state.newValue.employer} name="Employer" propertyName="employer" onChange={this.handleChange} key={i++} errors={this.state.errors} />
 			];
 		}
 		getTitle() {
 			return 'Employment Information';
 		}
-		putData(a,b,c,d) {
-			return services.putEmployment(a,b,c,d);
-		}
 	};
 	class ContactInformation extends InfoBox
 	{
-		getData() {	
-			services.getContactInformation(
-				this.state.id,
-				(response) => {
-					renderContactInformation(response);
-					this.handleToggleMode()
-				},
-				function(x,s,e) {
-					console.error({
-						x: x,
-						s: x,
-						e: e
-					});
-					//handleError(document.getElementById('edit-employment'), 'Employment', e, x);
-				});
-		}
-		
 		getRows() {
 			var i=0;
 			return [
-				<RowInput mode={this.state.mode} value={this.state.newValue.email} name="Email" propertyName="email" onChange={this.handleChange} key={i++} />,
-				<RowInput mode={this.state.mode} value={this.state.newValue.street_address} name="Street Address" propertyName="street_address" onChange={this.handleChange} key={i++} />,
-				<RowSelect mode={this.state.mode} value={this.state.newValue.state} name="State" propertyName="state" onChange={this.handleChange} key={i++} 
+				<RowInput mode={this.state.mode} value={this.state.newValue.email} name="Email" propertyName="email" onChange={this.handleChange} key={i++} errors={this.state.errors} />,
+				<RowInput mode={this.state.mode} value={this.state.newValue.street_address} name="Street Address" propertyName="street_address" onChange={this.handleChange} key={i++} errors={this.state.errors} />,
+				<RowSelect mode={this.state.mode} value={this.state.newValue.state} name="State" propertyName="state" onChange={this.handleChange} key={i++} errors={this.state.errors} 
 					options={Utils.getStates()} />,
-				<RowInput mode={this.state.mode} value={this.state.newValue.home_phone} name="Home Phone Number" propertyName="home_phone" onChange={this.handleChange} key={i++} />,
-				<RowInput mode={this.state.mode} value={this.state.newValue.city} name="City" propertyName="city" onChange={this.handleChange} key={i++} />,
-				<RowInput mode={this.state.mode} value={this.state.newValue.country} name="Country" propertyName="country" onChange={this.handleChange} key={i++} />,
-				<RowInput mode={this.state.mode} value={this.state.newValue.country_code} name="Country Code" propertyName="country_code" onChange={this.handleChange} key={i++} />
+				<RowInput mode={this.state.mode} value={this.state.newValue.home_phone} name="Home Phone Number" propertyName="home_phone" onChange={this.handleChange} key={i++} errors={this.state.errors} />,
+				<RowInput mode={this.state.mode} value={this.state.newValue.city} name="City" propertyName="city" onChange={this.handleChange} key={i++} errors={this.state.errors} />,
+				<RowInput mode={this.state.mode} value={this.state.newValue.country} name="Country" propertyName="country" onChange={this.handleChange} key={i++} errors={this.state.errors} />,
+				<RowInput mode={this.state.mode} value={this.state.newValue.country_code} name="Country Code" propertyName="country_code" onChange={this.handleChange} key={i++} errors={this.state.errors} />
 			];
 		}
 		getTitle() {
 			return 'Contact Information';
 		}
-		putData(a,b,c,d) {
-			return services.putContactInformation(a,b,c,d);
-		}
 	};
 	class PersonalInformation extends InfoBox
 	{
-		getData() {	
-			services.getPersonalInformation(
-				this.state.id,
-				(response) => {
-					renderPersonalInformation(response);
-					this.handleToggleMode()
-				},
-				function(x,s,e) {
-					console.error({
-						x: x,
-						s: x,
-						e: e
-					});
-					//handleError(document.getElementById('edit-employment'), 'Personal', e, x);
-				});
-		}
-		
 		getRows() {
 			var i=0;
 			return [
-				<RowInput mode={this.state.mode} value={this.state.newValue.first_name} name="First Name" propertyName="first_name" onChange={this.handleChange} key={i++} />,
-				<RowInput mode={this.state.mode} value={this.state.newValue.last_name} name="Last Name" propertyName="last_name" onChange={this.handleChange} key={i++} />,
-				<RowInput mode={this.state.mode} value={this.state.newValue.dob} name="Date of Birth" propertyName="dob" onChange={this.handleChange} key={i++} />,
-				<RowInput mode={this.state.mode} value={this.state.newValue.ssn} name="Social Security Number" propertyName="ssn" onChange={this.handleChange} key={i++} />,
-				<RowSelect mode={this.state.mode} value={this.state.newValue.gender} name="Gender" propertyName="gender" onChange={this.handleChange} key={i++} 
+				<RowInput mode={this.state.mode} value={this.state.newValue.first_name} name="First Name" propertyName="first_name" onChange={this.handleChange} key={i++} errors={this.state.errors} />,
+				<RowInput mode={this.state.mode} value={this.state.newValue.last_name} name="Last Name" propertyName="last_name" onChange={this.handleChange} key={i++} errors={this.state.errors} />,
+				<RowInput mode={this.state.mode} value={this.state.newValue.dob} name="Date of Birth" propertyName="dob" onChange={this.handleChange} key={i++} errors={this.state.errors} />,
+				<RowInput mode={this.state.mode} value={this.state.newValue.ssn} name="Social Security Number" propertyName="ssn" onChange={this.handleChange} key={i++} errors={this.state.errors} />,
+				<RowSelect mode={this.state.mode} value={this.state.newValue.gender} name="Gender" propertyName="gender" onChange={this.handleChange} key={i++} errors={this.state.errors} 
 					options={['Male', 'Female']} />,
-				<RowSelect mode={this.state.mode} value={this.state.newValue.marital_status} name="Marital Status" propertyName="marital_status" onChange={this.handleChange} key={i++} 
-					options={['Single', 'Married', 'Divorced', 'Widowed']}/>
+				<RowSelect mode={this.state.mode} value={this.state.newValue.marital_status} name="Marital Status" propertyName="marital_status" onChange={this.handleChange} key={i++} errors={this.state.errors} 
+					options={['Single', 'Married', 'Divorced', 'Legal Seperation', 'Widowed', 'Refused']}/>
 			];
 		}
 		getTitle() {
 			return 'Personal Information';
-		}
-		putData(a,b,c,d) {
-			return services.putPersonalInformation(a,b,c,d);
 		}
 	};
 	
@@ -599,6 +701,8 @@
 	}
 	
 	var services;
+	
+	/*
 	function renderEmploymentInformation(response) {
 		try {
 			var member = response.body.Item;
@@ -632,7 +736,7 @@
 			handleError(document.getElementById('personal'), 'Personal Information', e, response);
 		}
 	}
-
+*/
 	$(document).ready(function() {
 		var memberid = Utils.getParameterByName('id');
 		
@@ -650,6 +754,7 @@
 			Config.ApiKey,
 			Config.ChaosMonkeyOdds
 			);
+			
 		/*
 		services.getBasicInformation(
 			memberid,
@@ -666,7 +771,7 @@
 			function(x,s,e) {
 				handleError(document.getElementById('basic-info'), 'Basic Information', e, x);
 			});*/
-		
+		/*
 		services.getMilitaryService(
 			memberid,
 			function(response) {
@@ -736,18 +841,52 @@
 			function(x,s,e) {
 				handleError(document.getElementById('personal'), 'Personal Information', e, x);
 			});
+			*/
+			
+		
+		ReactDOM.render(
+			<EmploymentInfo memberid={memberid}
+				services={services}
+				retrieveMethod={services.getEmployment} 
+				putMethod={services.putEmployment}
+				/>,
+			document.getElementById('employment')
+			);
+		ReactDOM.render(
+			<ContactInformation memberid={memberid}
+				services={services}
+				retrieveMethod={services.getContactInformation} 
+				putMethod={services.putContactInformation}
+				/>,
+			document.getElementById('contact')
+			);
+		ReactDOM.render(
+			<PersonalInformation memberid={memberid}
+				services={services}
+				retrieveMethod={services.getPersonalInformation} 
+				putMethod={services.putPersonalInformation}
+				/>,
+			document.getElementById('personal')
+			);
+		
 	});
 	</script>
   </head>
   <body>
-  	<div class="container-fluid">
-	    <h1>
-    		MSR Window
-    	</h1>
-		<hr />
+  	<nav class="navbar navbar-default">
+	  <div class="container-fluid">
+		<div class="navbar-header">
+			<a class="navbar-brand" href="index.html">
+				<span><img src="imgs/logo.png" height="18px" /></span>
+				MSR Pulse
+			</a>
+    	</div>
+		<a href="index.html" class="btn btn-default navbar-btn navbar-right">Close</a>
+	  </div>
+	</nav>
+  	<div class="container-fluid min-height">
 		
 		<div id="member-not-found"></div>
-		<!--<div id="basic-info" class="panel"></div>-->
 		<div class="row">
 			<div class="col-md-4">
 				<div id="personal" class="panel"></div>
@@ -772,5 +911,12 @@
 		
 		
    </div>
+	<hr />
+	<div class="text-center text-muted">
+		<p><small>Built by 
+			<a href="https://www.instagram.com/wafulcopter/" target="_blank">Chris Waful</a>
+		</small></p>
+	</div>
+	<img src="imgs/logo.png" class="center-block img-circle footer-logo" />
   </body>
 </html>
