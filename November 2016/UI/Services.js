@@ -65,6 +65,13 @@ class Services {
 			id, onSuccess, onError)
 			);
 	}
+	putMilitaryService(id, data, onSuccess, onError) {
+		console.log(arguments);
+		$.ajax(this.buildAjaxPutRequest(
+			this.getServiceUrl('member-information', 'militaryservice'),
+			onSuccess, onError, data)
+			);
+	}
 	
 	getIdentifications(id, onSuccess, onError) {
 		$.ajax(this.buildAjaxRequest(

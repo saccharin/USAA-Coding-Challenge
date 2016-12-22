@@ -34,111 +34,7 @@
 	<script src="Utils.js"></script>
 	
 	<script type="text/babel">
-	class BasicInfo extends React.Component {
-		render() {
-			var values = [];
-			var i=0;
-			Object.getOwnPropertyNames(this.props.member).forEach((p) => {
-				if(['first_name', 'last_name'].indexOf(p) >= 0)
-					return;
-					
-				var key = (i++).toString();
-				values.push(<BasicProperty name={p} value={this.props.member[p]} key={key} />);
-			});
-			return (
-				<div className="panel panel-default">
-					<div className="panel-heading">
-						<h2>
-							{this.props.member.first_name} {this.props.member.last_name}
-							<small className="pull-right">Member ID: <strong>{this.props.member.id}</strong></small>
-						</h2>
-					</div>
-					<div className="panel-body row">
-						<div className="col-md-6">
-							<h4>Personal Information</h4>
-							<dl className="dl-horizontal">
-								<dt>Gender</dt>
-								<dd>{this.props.member.gender}</dd>
-								<dt>Birthday</dt>
-								<dd>{this.props.member.dob}</dd>
-								<dt>SSN</dt>
-								<dd>{this.props.member.ssn}</dd>
-								<dt>Marital Status</dt>
-								<dd>{this.props.member.marital_status}</dd>
-							</dl>
-						</div>
-						<div className="col-md-6">
-							<h4>Contact Information</h4>
-							<dl className="dl-horizontal">
-								<dt>Home Phone Number</dt>
-								<dd>{this.props.member.home_phone}</dd>
-								<dt>Email Address</dt>
-								<dd>{this.props.member.email}</dd>
-								<dt>Home Address</dt>
-								<dd>
-									<address>
-										{this.props.member.street_address}<br />
-										{this.props.member.city}, {this.props.member.state}<br />
-										{this.props.member.country} ({this.props.member.country_code})
-									</address>
-								</dd>
-							</dl>
-						</div>
-					</div>
-				</div>
-			);
-		}
-	};
-	class BasicProperty extends React.Component {
-		render() {
-			return (
-				<div className="col-md-3">
-					<dl className="dl-horizontal"><dt>{this.props.name}</dt><dd>{this.props.value}</dd></dl>
-				</div>
-			);
-		}
-	};
-	
-	class MilitaryService extends React.Component {
-		render() {
-			var rows = [];
-			var i = 0;
-			
-			if(!this.props.member.military)
-				this.props.member.military = [];
-			
-			this.props.member.military.forEach(function(military) {
-				var key = (i++).toString();
-				rows.push(<MilitaryInstance service={military} key={key} />);
-			});
-			return (
-				<div className="panel panel-default">
-					<div className="panel-heading">
-						<h3>Military Service</h3>
-					</div>
-					<table className="table">
-						<thead>
-							<tr><th>Branch</th><th>Status</th></tr>
-						</thead>
-						<tbody>
-							{rows}
-						</tbody>
-					</table>
-				</div>
-			);
-		}
-	};
-	class MilitaryInstance extends React.Component {
-		render() {
-			return (
-				<tr>
-					<td>{this.props.service.branch}</td>
-					<td>{this.props.service.status}</td>
-				</tr>
-				);
-		}
-	};
-	
+
 	class Identifications extends React.Component {
 		render() {
 			var rows = [];
@@ -329,10 +225,19 @@
 						);
 				}
 				
+				var size1 = 'col-sm-4 control-label';
+				if(this.props.deleteButton != null) {
+					size1 = 'col-md-3 control-label';
+				}
 				
 				return (
 					<div className="form-group">
-						<label htmlFor={id} className="col-sm-4 control-label">
+						{ this.props.deleteButton && 
+						<div className="col-sm-1">
+							{this.props.deleteButton}
+						</div>
+						}
+						<label htmlFor={id} className={size1}>
 							{this.props.name}
 						</label>
 						<div className="col-sm-8">
@@ -348,6 +253,25 @@
 				);
 			
 			}
+		}
+	};
+	class RowList extends React.Component {
+		constructor(props) {
+			super(props);
+			this.handleChange = this.handleChange.bind(this);
+		}
+		
+		handleChange(event) {
+			this.props.onChange(this.props.propertyName, this.textInput.value);
+		}
+		
+		render() {
+			return (
+				<div>
+					<dt>{this.props.name}</dt>
+					<dd>{JSON.stringify(this.props.value)}</dd>
+				</div>
+			);
 		}
 	};
 	
@@ -388,7 +312,7 @@
 			var newValue = this.state.newValue;
 			
 			newValue[property] = value;
-			
+			console.log(newValue);
 			this.setState({
 				changed: true,
 				newValue: newValue,
@@ -443,7 +367,7 @@
 		}
 		
 		handleError(error, line1) {
-			console.log(error);
+			console.error(error);
 			var text = '';
 			if(typeof error === 'string')
 				text = error;
@@ -490,7 +414,6 @@
 				}, 1)
 			});
 			var self = this;
-			console.log(this);
 			
 			this.props.putMethod.call(
 				this.props.services,
@@ -601,13 +524,174 @@
 		}
 	};
 	
+	class MiniBox extends React.Component
+	{
+		constructor(props) {
+			super(props);
+			
+			this.handleLocalChange = this.handleLocalChange.bind(this);
+			this.handleDelete = this.handleDelete.bind(this);
+		}
+		
+		componentDidMount() {
+			var newValue = {};
+			this.props.rows.forEach((r) => {
+				newValue[r.props.propertyName] = r.props.value;
+			});
+			
+			this.setState({
+				newValue: newValue,
+				oldValue: JSON.parse(JSON.stringify(newValue))
+			});
+		}
+		
+		handleDelete(e) {
+			e.preventDefault();
+			this.props.handleDelete(this.props.index);
+		}
+		handleLocalChange(property, value) {
+			console.log(this);
+			this.state.newValue[property] = value;
+			this.setState({
+				newValue: this.state.newValue
+			});
+			
+			this.props.reportChange(this.props.index, this.state.newValue);
+		}
+		render() {
+			var newRows = [];
+			var rows = this.props.rows;
+			var button = null;
+			if(this.props.edit) {
+				button = (<button className="btn btn-link" onClick={this.handleDelete}><span className="glyphicon glyphicon-remove text-danger">&nbsp;</span></button>);
+			}
+			
+			rows.forEach((r,i) => {
+				var row; 
+				
+				if(i == 0) {
+					row = React.cloneElement(r, { onChange: this.handleLocalChange, deleteButton: button  });
+				} else {
+					row = React.cloneElement(r, { onChange: this.handleLocalChange });
+				}
+				
+				newRows.push(row);
+			});
+			
+			return (
+				<div className="panel">
+				{newRows}
+				</div>
+				);
+				
+			
+			
+			/*
+			return (
+				<div className="panel">
+					<h4>{ this.props.edit && (
+						<button className="btn btn-link" onClick={this.handleDelete}><span className="glyphicon glyphicon-remove text-danger">&nbsp;</span></button>
+					)}</h4>
+					{newRows}
+				</div>
+			);
+			*/
+		}
+	};
+	
+	class AddButton extends React.Component
+	{
+		render() 
+		{
+			return (
+				<div className="panel">
+					<button className="btn btn-link" onClick={this.props.onClick}>
+						<span className="glyphicon glyphicon-plus">&nbsp;</span>
+						Add
+						</button>
+				</div>
+				);
+		}
+	};
+	
+	class MultiBox extends InfoBox
+	{
+		constructor(props) {
+			super(props);
+			
+			this.handleReportChange = this.handleReportChange.bind(this);
+			this.handleAdd = this.handleAdd.bind(this);
+			this.handleDelete = this.handleDelete.bind(this);
+		};
+		
+		getRows() {
+			var rows = [], i=0;
+			this.state.newValue[this.getPropertyName()].forEach((value) => {
+				var row = (
+					<MiniBox 
+						key={i} 
+						index={i}
+						rows={this.getRowProjection(value)}
+						reportChange={this.handleReportChange}
+						handleDelete={this.handleDelete}
+						edit={this.state.mode == 'edit'}
+						/>
+				);
+				rows.push(row);
+				i++;
+			});
+			
+			if(this.state.mode == 'edit') {
+				rows.push(<AddButton onClick={this.handleAdd} key={i++} />);
+			}
+			
+			return rows;
+		};
+		
+		handleReportChange(index, value) {
+			var newValue = this.state.newValue[this.getPropertyName()];
+			newValue[index] = value;
+			
+			this.handleChange(
+				this.getPropertyName(),
+				newValue
+				);
+		}
+		handleAdd(e) {
+			e.preventDefault();
+			
+			var newValue = this.state.newValue[this.getPropertyName()];
+			var newObj = {};
+			
+			this.getRowProjection({}).forEach((prop) => {
+				newObj[prop.propertyName] = '';
+			});
+			
+			newValue.push(newObj);
+			
+			this.handleChange(
+				this.getPropertyName(),
+				newValue
+				);
+		}
+		handleDelete(index) {
+			var newValue = this.state.newValue[this.getPropertyName()];
+			newValue.splice(index, 1);
+			
+			this.handleChange(
+				this.getPropertyName(),
+				newValue
+				);
+		}
+	};
+	
 	class EmploymentInfo extends InfoBox
 	{
 		getRows() {
 			var i=0;
 			return [
-				<RowInput mode={this.state.mode} value={this.state.newValue.occupation} name="Occupation" propertyName="occupation" onChange={this.handleChange} key={i++} errors={this.state.errors} />,
-				<RowInput mode={this.state.mode} value={this.state.newValue.employer} name="Employer" propertyName="employer" onChange={this.handleChange} key={i++} errors={this.state.errors} />
+				<RowInput mode={this.state.mode} value={this.state.newValue.occupation} name="Occupation" propertyName="occupation" onChange={this.handleChange} key={0} index={0} errors={this.state.errors} />,
+				<RowInput mode={this.state.mode} value={this.state.newValue.employer} name="Employer" propertyName="employer" onChange={this.handleChange} key={1} index={1} errors={this.state.errors} />
 			];
 		}
 		getTitle() {
@@ -625,8 +709,10 @@
 					options={Utils.getStates()} />,
 				<RowInput mode={this.state.mode} value={this.state.newValue.home_phone} name="Home Phone Number" propertyName="home_phone" onChange={this.handleChange} key={i++} errors={this.state.errors} />,
 				<RowInput mode={this.state.mode} value={this.state.newValue.city} name="City" propertyName="city" onChange={this.handleChange} key={i++} errors={this.state.errors} />,
-				<RowInput mode={this.state.mode} value={this.state.newValue.country} name="Country" propertyName="country" onChange={this.handleChange} key={i++} errors={this.state.errors} />,
-				<RowInput mode={this.state.mode} value={this.state.newValue.country_code} name="Country Code" propertyName="country_code" onChange={this.handleChange} key={i++} errors={this.state.errors} />
+				<RowSelect mode={this.state.mode} value={this.state.newValue.country} name="Country" propertyName="country" onChange={this.handleChange} key={i++} errors={this.state.errors} 
+					options={Utils.getCountries()} />,
+				// Pass
+				//<RowInput mode={this.state.mode} value={this.state.newValue.country_code} name="Country Code" propertyName="country_code" onChange={this.handleChange} key={i++} errors={this.state.errors} />
 			];
 		}
 		getTitle() {
@@ -645,98 +731,39 @@
 				<RowSelect mode={this.state.mode} value={this.state.newValue.gender} name="Gender" propertyName="gender" onChange={this.handleChange} key={i++} errors={this.state.errors} 
 					options={['Male', 'Female']} />,
 				<RowSelect mode={this.state.mode} value={this.state.newValue.marital_status} name="Marital Status" propertyName="marital_status" onChange={this.handleChange} key={i++} errors={this.state.errors} 
-					options={['Single', 'Married', 'Divorced', 'Legal Seperation', 'Widowed', 'Refused']}/>
+					options={["Divorced","Single","Separated","Legal Separation","Married","Divorced Pending","Refused","Widowed","None"]}/>
 			];
 		}
 		getTitle() {
 			return 'Personal Information';
 		}
 	};
-	
-	function handleError(element, type, error, xhr) {
-		if(xhr) 
-			console.error(xhr);
-		else
-			console.error(error);
-		
-		
-		function toString(err, messages) {
-			
-			if(typeof err === 'string') {
-				messages.push(err);
-				return;
-			}
-			for(var prop in err) {
-				var parsed = null;
-				try {
-					if(typeof error[prop] == 'object')
-						return toString(error[prop], messages);
-					
-					parsed = JSON.parse(error[prop]);
-					
-					if(typeof parsed == 'object')
-						toString(parsed, messages);
-					else
-						messages.push('<p><strong>' + prop + ':</strong> ' + err[prop] + '</p>');
-				} catch(x) {
-					messages.push('<p><strong>' + prop + ':</strong> ' + err[prop] + '</p>');
-				}
-			}
+	class MilitaryService extends MultiBox
+	{
+		constructor(props) {
+			super(props);
+		};
+		getPropertyName() {
+			return 'military'
 		}
-		element.className = 'panel panel-danger';
-		var texts = [];
-		toString(error, texts);
-		
-		if(xhr) {
-			try {
-				var body = xhr.responseJSON;
-				toString(body, texts);
-			} catch (x) { }
+
+		getRowProjection(item) {
+			var i=0;
+			return [
+				<RowSelect mode={this.state.mode} value={item.branch} name="Branch" propertyName="branch" key={i++} errors={this.state.errors} 
+					options={["Air Force","Army","Coast Guard","Marine","Navy"]} />,
+				<RowSelect mode={this.state.mode} value={item.status} name="Status" propertyName="status"  key={i++} errors={this.state.errors} 
+					options={["Retired","Drilling","Active","Separated","Inactive Reserve","Inactive"]} />,
+			];
 		}
 		
-		
-		element.innerHTML = '<div class="panel-heading"><h4>' + type + '</h4></div><div class="panel-body"><p>There was a problem retrieving the ' + 
-		type + ' data for this user.</p>' +
-		'<pre>'+ texts.join('') + '</pre></div>';
-	}
+		getTitle() {
+			return 'Military Service';
+		}
+	};
 	
 	var services;
 	
-	/*
-	function renderEmploymentInformation(response) {
-		try {
-			var member = response.body.Item;
-			ReactDOM.render(
-				<EmploymentInfo member={member} />,
-				document.getElementById('employment')
-				);
-		} catch(e) {
-			handleError(document.getElementById('employment'), 'Employment', e, response);
-		}
-	}
-	function renderContactInformation(response) {
-		try {
-			var member = response.body.Item;
-			ReactDOM.render(
-				<ContactInformation member={member} />,
-				document.getElementById('contact')
-				);
-		} catch(e) {
-			handleError(document.getElementById('contact'), 'Contact Information', e, response);
-		}
-	}
-	function renderPersonalInformation(response) {
-		try {
-			var member = response.body.Item;
-			ReactDOM.render(
-				<PersonalInformation member={member} />,
-				document.getElementById('personal')
-				);
-		} catch(e) {
-			handleError(document.getElementById('personal'), 'Personal Information', e, response);
-		}
-	}
-*/
 	$(document).ready(function() {
 		var memberid = Utils.getParameterByName('id');
 		
@@ -755,95 +782,8 @@
 			Config.ChaosMonkeyOdds
 			);
 			
+			
 		/*
-		services.getBasicInformation(
-			memberid,
-			function(response) {
-				try {
-					var member = response.body.Item;
-					ReactDOM.render(
-						<BasicInfo member={member} />,
-						document.getElementById('basic-info')
-						);
-				} catch(e) {
-					handleError(document.getElementById('basic-info'), 'Basic Information', response);
-				}},
-			function(x,s,e) {
-				handleError(document.getElementById('basic-info'), 'Basic Information', e, x);
-			});*/
-		/*
-		services.getMilitaryService(
-			memberid,
-			function(response) {
-				try {
-					var member = response.body.Item;
-					ReactDOM.render(
-						<MilitaryService member={member} />,
-						document.getElementById('military-service')
-						);
-				} catch(e) {
-					handleError(document.getElementById('military-service'), 'Military Service', response);
-				}},
-			function(x,s,e) {
-				handleError(document.getElementById('military-service'), 'Military Service', e, x);
-			});
-		
-		services.getIdentifications(
-			memberid,
-			function(response) {
-				try {
-					var member = response.body.Item;
-					ReactDOM.render(
-						<Identifications member={member} />,
-						document.getElementById('identifications')
-						);
-				} catch(e) {
-					handleError(document.getElementById('identifications'), 'Identifications', response);
-				}},
-			function(x,s,e) {
-				handleError(document.getElementById('identifications'), 'Identifications', e, x);
-			});
-		
-		services.getProducts(
-			memberid,
-			function(response) {
-				try {
-					var member = response.body.Item;
-					ReactDOM.render(
-						<Products member={member} />,
-						document.getElementById('products')
-						);
-				} catch(e) {
-					handleError(document.getElementById('products'), 'Products', response);
-				}},
-			function(x,s,e) {
-				handleError(document.getElementById('products'), 'Products', e, x);
-			});
-		
-		
-		services.getEmployment(
-			memberid,
-			renderEmploymentInformation,
-			function(x,s,e) {
-				handleError(document.getElementById('employment'), 'Employment', e, x);
-			});
-			
-		services.getContactInformation(
-			memberid,
-			renderContactInformation,
-			function(x,s,e) {
-				handleError(document.getElementById('contact'), 'Contact Information', e, x);
-			});
-			
-		services.getPersonalInformation(
-			memberid,
-			renderPersonalInformation,
-			function(x,s,e) {
-				handleError(document.getElementById('personal'), 'Personal Information', e, x);
-			});
-			*/
-			
-		
 		ReactDOM.render(
 			<EmploymentInfo memberid={memberid}
 				services={services}
@@ -867,6 +807,14 @@
 				putMethod={services.putPersonalInformation}
 				/>,
 			document.getElementById('personal')
+			);*/
+		ReactDOM.render(
+			<MilitaryService memberid={memberid}
+				services={services}
+				retrieveMethod={services.getMilitaryService} 
+				putMethod={services.putMilitaryService}
+				/>,
+			document.getElementById('military-service')
 			);
 		
 	});
@@ -914,7 +862,7 @@
 	<hr />
 	<div class="text-center text-muted">
 		<p><small>Built by 
-			<a href="https://www.instagram.com/wafulcopter/" target="_blank">Chris Waful</a>
+			<a href="https://github.com/saccharin/" target="_blank">Chris Waful</a>
 		</small></p>
 	</div>
 	<img src="imgs/logo.png" class="center-block img-circle footer-logo" />

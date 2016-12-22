@@ -139,6 +139,10 @@ var Utils = {
 	  return true;
 	},
 	
+	getCountries: function() {
+		return ['United States', 'Canada', 'France', 'Germany', 'United Kingdom'];
+	},
+	
 	// https://gist.github.com/mshafrir/2646763
 	getStates : function() {
 		return [{
