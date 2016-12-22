@@ -52,12 +52,12 @@ class Services {
 		};
 	}
 	
-	getBasicInformation(id, onSuccess, onError) {
-		$.ajax(this.buildAjaxRequest(
-			this.getServiceUrl('member-information', 'basicinformation'),
-			id, onSuccess, onError)
-			);
-	}
+	// getBasicInformation(id, onSuccess, onError) {
+	// 	$.ajax(this.buildAjaxRequest(
+	// 		this.getServiceUrl('member-information', 'basicinformation'),
+	// 		id, onSuccess, onError)
+	// 		);
+	// }
 	
 	getMilitaryService(id, onSuccess, onError) {
 		$.ajax(this.buildAjaxRequest(
@@ -66,7 +66,6 @@ class Services {
 			);
 	}
 	putMilitaryService(id, data, onSuccess, onError) {
-		console.log(arguments);
 		$.ajax(this.buildAjaxPutRequest(
 			this.getServiceUrl('member-information', 'militaryservice'),
 			onSuccess, onError, data)
@@ -79,12 +78,24 @@ class Services {
 			id, onSuccess, onError)
 			);
 	}
+	putIdentifications(id, data, onSuccess, onError) {
+		$.ajax(this.buildAjaxPutRequest(
+			this.getServiceUrl('member-information', 'identifications'),
+			onSuccess, onError, data)
+			);
+	}
 	
 	
 	getProducts(id, onSuccess, onError) {
 		$.ajax(this.buildAjaxRequest(
 			this.getServiceUrl('member-information', 'products'),
 			id, onSuccess, onError)
+			);
+	}
+	putProducts(id, data, onSuccess, onError) {
+		$.ajax(this.buildAjaxPutRequest(
+			this.getServiceUrl('member-information', 'products'),
+			onSuccess, onError, data)
 			);
 	}
 	

@@ -35,90 +35,6 @@
 	
 	<script type="text/babel">
 
-	class Identifications extends React.Component {
-		render() {
-			var rows = [];
-			var i=0;
-			
-			if(!this.props.member.identification)
-				this.props.member.identification = [];
-			
-			this.props.member.identification.forEach(function(id) {
-				var key = (i++).toString();
-				rows.push(<Identification id={id} key={key} />);
-			});
-			
-			return (
-				<div className="panel panel-default">
-					<div className="panel-heading">
-						<h3>Identifications</h3>
-					</div>
-					<table className="table table-striped">
-						<thead>
-							<tr><th>ID Type</th><th>ID Number</th><th>Validity</th></tr>
-						</thead>
-						<tbody>
-							{rows}
-						</tbody>
-					</table>
-				</div>
-			);
-		}
-	};
-	class Identification extends React.Component {
-		render() {
-			var validity = this.props.id.valid ? 'Valid' : <strong>Invalid</strong>
-			return (
-				<tr>
-					<td>{this.props.id.type}</td>
-					<td>{this.props.id.number}</td>
-					<td>{validity}</td>
-				</tr>
-			);
-		}
-	};
-	
-	
-	class Products extends React.Component {
-		render() {
-			var rows = [];
-			var i=0;
-			
-			if(!this.props.member.product)
-				this.props.member.product = [];
-			
-			this.props.member.product.forEach(function(product) {
-				var key = (i++).toString();
-				rows.push(<Product product={product} key={key} />);
-			});
-			
-			return (
-				<div className="panel panel-default">
-					<div className="panel-heading">
-						<h3>Products</h3>
-					</div>
-					<table className="table table-striped">
-						<thead>
-							<tr><th>Product</th><th>ID Number</th></tr>
-						</thead>
-						<tbody>
-							{rows}
-						</tbody>
-					</table>
-				</div>
-			);
-		}
-	};
-	class Product extends React.Component {
-		render() {
-			return (
-				<tr>
-					<td>{this.props.product.type}</td>
-					<td>{this.props.product.number}</td>
-				</tr>
-			);
-		}
-	};
 	
 	class MemberNotFound extends React.Component {
 		render() {
@@ -166,9 +82,19 @@
 					}
 				}
 				
+				var size1 = 'col-sm-4 control-label';
+				if(this.props.deleteButton != null) {
+					size1 = 'col-md-3 control-label';
+				}
+				
 				return (
 					<div className="form-group">
-						<label htmlFor={id} className="col-sm-4 control-label">
+						{ this.props.deleteButton && 
+						<div className="col-sm-1">
+							{this.props.deleteButton}
+						</div>
+						}
+						<label htmlFor={id} className={size1}>
 							{this.props.name}
 						</label>
 						<div className="col-sm-8">
@@ -200,13 +126,31 @@
 		}
 		
 		render() {
+
 			if(this.props.mode === 'render') {
-				return (
-					<div>
-						<dt>{this.props.name}</dt>
-						<dd>{this.props.value}</dd>
-					</div>
-				);
+				if(typeof this.props.options[0] === 'string')
+					return (
+						<div>
+							<dt>{this.props.name}</dt>
+							<dd>{this.props.value}</dd>
+						</div>
+					);
+				else {
+					var value = this.props.options[0].text;
+					for(var i=0,v;v=this.props.options[i];i++) {
+						if(v.value == this.props.value) {
+							value = v.text;
+							break;
+						}
+					}
+					return (
+						<div>
+							<dt>{this.props.name}</dt>
+							<dd>{value}</dd>
+						</div>
+					);
+
+				}
 			} else {
 				var id = 'value_' + this.props.propertyName;
 				var errors = (this.props.errors || {});
@@ -220,9 +164,14 @@
 				
 				var options = [];
 				for(var i=0,option;option=this.props.options[i];i++) {
-					options.push(
-						<option value={option} key={i}>{option}</option>
-						);
+					if(typeof option === 'string')
+						options.push(
+							<option value={option} key={i}>{option}</option>
+							);
+					else
+						options.push(
+							<option value={option.value} key={i}>{option.text}</option>
+							);
 				}
 				
 				var size1 = 'col-sm-4 control-label';
@@ -583,19 +532,6 @@
 				{newRows}
 				</div>
 				);
-				
-			
-			
-			/*
-			return (
-				<div className="panel">
-					<h4>{ this.props.edit && (
-						<button className="btn btn-link" onClick={this.handleDelete}><span className="glyphicon glyphicon-remove text-danger">&nbsp;</span></button>
-					)}</h4>
-					{newRows}
-				</div>
-			);
-			*/
 		}
 	};
 	
@@ -761,6 +697,52 @@
 			return 'Military Service';
 		}
 	};
+	class Identifications extends MultiBox
+	{
+		constructor(props) {
+			super(props);
+		};
+		getPropertyName() {
+			return 'identification'
+		}
+
+		getRowProjection(item) {
+			var i=0;
+			return [
+				<RowInput mode={this.state.mode} value={item.number} name="Number" propertyName="number" key={i++} errors={this.state.errors} />,
+				<RowSelect mode={this.state.mode} value={item.type} name="Type" propertyName="type"  key={i++} errors={this.state.errors} 
+					options={["Drivers License","State ID","Military ID","Passport","Visa"]} />,
+				<RowSelect mode={this.state.mode} value={item.valid} name="Valid" propertyName="valid"  key={i++} errors={this.state.errors} 
+					options={[{value: false, text: "Invalid"},{value:true,text:"Valid"}]} />
+			];
+		}
+		
+		getTitle() {
+			return 'Identifications';
+		}
+	};
+	class Products extends MultiBox
+	{
+		constructor(props) {
+			super(props);
+		};
+		getPropertyName() {
+			return 'product'
+		}
+
+		getRowProjection(item) {
+			var i=0;
+			return [
+				<RowInput mode={this.state.mode} value={item.number} name="Number" propertyName="number" key={i++} errors={this.state.errors} />,
+				<RowSelect mode={this.state.mode} value={item.type} name="Type" propertyName="type"  key={i++} errors={this.state.errors} 
+					options={["Car Insurance", "Checking", "College Savings Plan", "Credit Card", "Credit Check", "House Insurance", "Life Insurance", "Loan", "Mutual Fund", "Prepaid Card", "Real Estate Assistance", "Savings", "Supplemental Coverages"]} />
+			];
+		}
+		
+		getTitle() {
+			return 'USAA Products';
+		}
+	};
 	
 	var services;
 	
@@ -783,7 +765,7 @@
 			);
 			
 			
-		/*
+		
 		ReactDOM.render(
 			<EmploymentInfo memberid={memberid}
 				services={services}
@@ -807,7 +789,7 @@
 				putMethod={services.putPersonalInformation}
 				/>,
 			document.getElementById('personal')
-			);*/
+			);
 		ReactDOM.render(
 			<MilitaryService memberid={memberid}
 				services={services}
@@ -815,6 +797,22 @@
 				putMethod={services.putMilitaryService}
 				/>,
 			document.getElementById('military-service')
+			);
+		ReactDOM.render(
+			<Identifications memberid={memberid}
+				services={services}
+				retrieveMethod={services.getIdentifications} 
+				putMethod={services.putIdentifications}
+				/>,
+			document.getElementById('identifications')
+			);
+		ReactDOM.render(
+			<Products memberid={memberid}
+				services={services}
+				retrieveMethod={services.getProducts} 
+				putMethod={services.putProducts}
+				/>,
+			document.getElementById('products')
 			);
 		
 	});
