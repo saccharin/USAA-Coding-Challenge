@@ -380,6 +380,9 @@ var Utils = {
 		{
 			"name": "Wyoming",
 			"abbreviation": "WY"
-		}].map(function(s) { return s.abbreviation; });
+		}].map(function(s) { return {
+			value: s.abbreviation,
+			text: s.name
+		}});
 	}
 };

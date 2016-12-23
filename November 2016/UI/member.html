@@ -62,55 +62,66 @@
 		handleChange(event) {
 			this.props.onChange(this.props.propertyName, this.textInput.value);
 		}
+
+		renderRowStandard() {
+			return (
+				<div>
+					<dt>{this.props.name}</dt>
+					<dd>{this.props.value}</dd>
+				</div>
+			);
+		}
+
+		renderRowEdit() {
+			if(this.props.editable === false)
+				return null;
+
+			var id = 'value_' + this.props.propertyName;
+			var errors = (this.props.errors || {});
+			var error = null;
+			if(errors.hasOwnProperty(this.props.propertyName)) {
+				var errs = errors[this.props.propertyName];
+				if(errs.length > 0) {
+					error = errs.join('\n');
+				}
+			}
+			
+			var size1 = 'col-sm-4 control-label';
+			if(this.props.deleteButton != null) {
+				size1 = 'col-md-3 control-label';
+			}
+			
+			return (
+				<div className="form-group">
+					{ this.props.deleteButton && 
+					<div className="col-sm-1">
+						{this.props.deleteButton}
+					</div>
+					}
+					<label htmlFor={id} className={size1}>
+						{this.props.name}
+					</label>
+					<div className="col-sm-8">
+					  <input className="form-control" type="text" 
+						autoComplete="off"
+						id={id} name={id} 
+						value={this.props.value || ''} 
+						ref={(input) => { this.textInput = input; }}
+						onChange={this.handleChange} />
+						{error && 
+						<small className="text-danger">{error}</small>
+						}
+					</div>
+				</div>
+			);
+
+		}
 		
 		render() {
 			if(this.props.mode === 'render') {
-				return (
-					<div>
-						<dt>{this.props.name}</dt>
-						<dd>{this.props.value}</dd>
-					</div>
-				);
+				return this.renderRowStandard();
 			} else {
-				var id = 'value_' + this.props.propertyName;
-				var errors = (this.props.errors || {});
-				var error = null;
-				if(errors.hasOwnProperty(this.props.propertyName)) {
-					var errs = errors[this.props.propertyName];
-					if(errs.length > 0) {
-						error = errs.join('\n');
-					}
-				}
-				
-				var size1 = 'col-sm-4 control-label';
-				if(this.props.deleteButton != null) {
-					size1 = 'col-md-3 control-label';
-				}
-				
-				return (
-					<div className="form-group">
-						{ this.props.deleteButton && 
-						<div className="col-sm-1">
-							{this.props.deleteButton}
-						</div>
-						}
-						<label htmlFor={id} className={size1}>
-							{this.props.name}
-						</label>
-						<div className="col-sm-8">
-						  <input className="form-control" type="text" 
-							autoComplete="off"
-							id={id} name={id} 
-							value={this.props.value} 
-							ref={(input) => { this.textInput = input; }}
-							onChange={this.handleChange} />
-							{error && 
-							<small className="text-danger">{error}</small>
-							}
-						</div>
-					</div>
-				);
-			
+				return this.renderRowEdit();
 			}
 		}
 	};
@@ -124,106 +135,101 @@
 		handleChange(event) {
 			this.props.onChange(this.props.propertyName, this.textInput.value);
 		}
+
+		renderRowStandard() {
+			if(typeof this.props.options[0] === 'string')
+				return (
+					<div>
+						<dt>{this.props.name}</dt>
+						<dd>{this.props.value}</dd>
+					</div>
+				);
+			else {
+				var value = this.props.options[0].text;
+				for(var i=0,v;v=this.props.options[i];i++) {
+					if((v.value || '') == this.props.value) {
+						value = v.text;
+						break;
+					}
+				}
+				return (
+					<div>
+						<dt>{this.props.name}</dt>
+						<dd>{value}</dd>
+					</div>
+				);
+
+			}
+		}
+
+		renderRowEdit() {
+			if(this.props.editable === false)
+				return null;
+			
+			var id = 'value_' + this.props.propertyName;
+			var errors = (this.props.errors || {});
+			var error = null;
+			if(errors.hasOwnProperty(this.props.propertyName)) {
+				var errs = errors[this.props.propertyName];
+				if(errs.length > 0) {
+					error = errs.join('\n');
+				}
+			}
+
+			var options = [];
+			var option;
+
+			this.props.options.forEach((option,i) => {
+
+			//for(var i=0,option;option=this.props.options[i];i++) {
+				if(typeof option === 'string')
+					options.push(
+						<option value={option} key={i}>{option}</option>
+						);
+				else
+					options.push(
+						<option value={option.value} key={i}>{option.text}</option>
+						);
+			});
+			
+			var size1 = 'col-sm-4 control-label';
+			if(this.props.deleteButton != null) {
+				size1 = 'col-md-3 control-label';
+			}
+			
+			return (
+				<div className="form-group">
+					{ this.props.deleteButton && 
+					<div className="col-sm-1">
+						{this.props.deleteButton}
+					</div>
+					}
+					<label htmlFor={id} className={size1}>
+						{this.props.name}
+					</label>
+					<div className="col-sm-8">
+					  <select className="form-control" type="text" id={id} name={id} 
+						value={this.props.value || ''} 
+						ref={(input) => { this.textInput = input; }}
+						onChange={this.handleChange}>
+						{options}
+					  </select>
+					  <small className="text-danger">{error}</small>
+					</div>
+				</div>
+			);
+		}
 		
 		render() {
 
 			if(this.props.mode === 'render') {
-				if(typeof this.props.options[0] === 'string')
-					return (
-						<div>
-							<dt>{this.props.name}</dt>
-							<dd>{this.props.value}</dd>
-						</div>
-					);
-				else {
-					var value = this.props.options[0].text;
-					for(var i=0,v;v=this.props.options[i];i++) {
-						if(v.value == this.props.value) {
-							value = v.text;
-							break;
-						}
-					}
-					return (
-						<div>
-							<dt>{this.props.name}</dt>
-							<dd>{value}</dd>
-						</div>
-					);
-
-				}
+				return this.renderRowStandard();
 			} else {
-				var id = 'value_' + this.props.propertyName;
-				var errors = (this.props.errors || {});
-				var error = null;
-				if(errors.hasOwnProperty(this.props.propertyName)) {
-					var errs = errors[this.props.propertyName];
-					if(errs.length > 0) {
-						error = errs.join('\n');
-					}
-				}
-				
-				var options = [];
-				for(var i=0,option;option=this.props.options[i];i++) {
-					if(typeof option === 'string')
-						options.push(
-							<option value={option} key={i}>{option}</option>
-							);
-					else
-						options.push(
-							<option value={option.value} key={i}>{option.text}</option>
-							);
-				}
-				
-				var size1 = 'col-sm-4 control-label';
-				if(this.props.deleteButton != null) {
-					size1 = 'col-md-3 control-label';
-				}
-				
-				return (
-					<div className="form-group">
-						{ this.props.deleteButton && 
-						<div className="col-sm-1">
-							{this.props.deleteButton}
-						</div>
-						}
-						<label htmlFor={id} className={size1}>
-							{this.props.name}
-						</label>
-						<div className="col-sm-8">
-						  <select className="form-control" type="text" id={id} name={id} 
-							value={this.props.value} 
-							ref={(input) => { this.textInput = input; }}
-							onChange={this.handleChange}>
-							{options}
-						  </select>
-						  <small className="text-danger">{error}</small>
-						</div>
-					</div>
-				);
-			
+				return this.renderRowEdit();
 			}
 		}
 	};
-	class RowList extends React.Component {
-		constructor(props) {
-			super(props);
-			this.handleChange = this.handleChange.bind(this);
-		}
-		
-		handleChange(event) {
-			this.props.onChange(this.props.propertyName, this.textInput.value);
-		}
-		
-		render() {
-			return (
-				<div>
-					<dt>{this.props.name}</dt>
-					<dd>{JSON.stringify(this.props.value)}</dd>
-				</div>
-			);
-		}
-	};
-	
+
 	class InfoBox extends React.Component {
 		constructor(props) {
 			super(props);
@@ -261,7 +267,7 @@
 			var newValue = this.state.newValue;
 			
 			newValue[property] = value;
-			console.log(newValue);
+			//console.log(newValue);
 			this.setState({
 				changed: true,
 				newValue: newValue,
@@ -289,16 +295,20 @@
 					});
 				},
 				(x,s,e) => {
-					console.error({
-						x: x,
-						s: x,
-						e: e
-					});
 					this.handleError(x);
 				});
 		}
 		
 		handleCancel(event) {
+			// if there are pending changes, and no error message indicating so
+			if(this.state.changed && !this.state.changeError) {
+				this.setState({
+					changeError: 'You have pending changes. Click Cancel again to discard your changes.'
+				});
+				return;
+			}
+
+
 			this.setState({
 				newValue: JSON.parse(JSON.stringify(this.state.oldValue)),
 				changeError: '',
@@ -317,6 +327,7 @@
 		
 		handleError(error, line1) {
 			console.error(error);
+
 			var text = '';
 			if(typeof error === 'string')
 				text = error;
@@ -343,7 +354,7 @@
 		handleSubmit(event) {
 			if(!this.state.changed) {
 				this.setState({
-					changeError: 'No change detected'
+					changeError: 'You haven\'t made any changes yet'
 				});
 				return false;
 			}
@@ -373,11 +384,11 @@
 					this.handleRetrieve();
 				},
 				function(x,s,e) {
-					console.error({
-						x: x,
-						s: s,
-						e: e
-					});
+					// console.error({
+					// 	x: x,
+					// 	s: s,
+					// 	e: e
+					// });
 					
 					clearInterval(self.state.interval);
 					self.state.interval = null;
@@ -410,7 +421,7 @@
 					<div className="panel-body" ref="body">
 						<img src="imgs/waiting.gif" className="center-block" />
 						{ this.state.masterError &&
-						<div>
+						<div className="text-center">
 							<h4 className="text-danger">{ this.state.masterError }</h4>
 							<button className="btn btn-link center-block" onClick={this.handleRetrieve}>
 								<span className="glyphicon glyphicon-refresh">&nbsp;</span>
@@ -457,13 +468,15 @@
 					</div>
 					{ isEdit && (
 					<div className="panel-footer" ref="footer">
-						<div className="pull-right">
+						{this.state.changeError && (
+						<div>
 							<p className="text-danger">
 								{this.state.changeError}
 								&nbsp;&nbsp;
-								<button onClick={this.handleSubmit} className="btn btn-primary">Save</button>
 							</p>
 						</div>
+						)}
+						<button onClick={this.handleSubmit} className="btn btn-primary pull-right">Save</button>
 						<button onClick={this.handleCancel} className="btn btn-link">Cancel</button>
 					</div>
 					)}
@@ -499,8 +512,17 @@
 			this.props.handleDelete(this.props.index);
 		}
 		handleLocalChange(property, value) {
-			console.log(this);
+			//console.log(this);
 			this.state.newValue[property] = value;
+
+			this.props.rows.forEach((r) => {
+				if(r.props.getValue) {
+					this.state.newValue[r.props.propertyName] = r.props.getValue(this.state.newValue[r.props.propertyName]);
+				}
+			});
+
+			//console.log(this.state.newValue);
+
 			this.setState({
 				newValue: this.state.newValue
 			});
@@ -528,7 +550,7 @@
 			});
 			
 			return (
-				<div className="panel">
+				<div className="pad-bottom">
 				{newRows}
 				</div>
 				);
@@ -540,7 +562,7 @@
 		render() 
 		{
 			return (
-				<div className="panel">
+				<div className="pad-bottom">
 					<button className="btn btn-link" onClick={this.props.onClick}>
 						<span className="glyphicon glyphicon-plus">&nbsp;</span>
 						Add
@@ -562,6 +584,9 @@
 		
 		getRows() {
 			var rows = [], i=0;
+			if(this.state.newValue[this.getPropertyName()] == null)
+				this.state.newValue[this.getPropertyName()] = [];
+
 			this.state.newValue[this.getPropertyName()].forEach((value) => {
 				var row = (
 					<MiniBox 
@@ -665,9 +690,9 @@
 				<RowInput mode={this.state.mode} value={this.state.newValue.dob} name="Date of Birth" propertyName="dob" onChange={this.handleChange} key={i++} errors={this.state.errors} />,
 				<RowInput mode={this.state.mode} value={this.state.newValue.ssn} name="Social Security Number" propertyName="ssn" onChange={this.handleChange} key={i++} errors={this.state.errors} />,
 				<RowSelect mode={this.state.mode} value={this.state.newValue.gender} name="Gender" propertyName="gender" onChange={this.handleChange} key={i++} errors={this.state.errors} 
-					options={['Male', 'Female']} />,
+					options={['', 'Male', 'Female']} />,
 				<RowSelect mode={this.state.mode} value={this.state.newValue.marital_status} name="Marital Status" propertyName="marital_status" onChange={this.handleChange} key={i++} errors={this.state.errors} 
-					options={["Divorced","Single","Separated","Legal Separation","Married","Divorced Pending","Refused","Widowed","None"]}/>
+					options={["","Divorced","Single","Separated","Legal Separation","Married","Divorced Pending","Refused","Widowed","None"]}/>
 			];
 		}
 		getTitle() {
@@ -687,9 +712,9 @@
 			var i=0;
 			return [
 				<RowSelect mode={this.state.mode} value={item.branch} name="Branch" propertyName="branch" key={i++} errors={this.state.errors} 
-					options={["Air Force","Army","Coast Guard","Marine","Navy"]} />,
+					options={["", "Air Force","Army","Coast Guard","Marine","Navy"]} />,
 				<RowSelect mode={this.state.mode} value={item.status} name="Status" propertyName="status"  key={i++} errors={this.state.errors} 
-					options={["Retired","Drilling","Active","Separated","Inactive Reserve","Inactive"]} />,
+					options={["", "Retired","Drilling","Active","Separated","Inactive Reserve","Inactive"]} />,
 			];
 		}
 		
@@ -706,13 +731,23 @@
 			return 'identification'
 		}
 
+		parseBool(val) {
+			if(typeof val === 'boolean')
+				return val;
+
+			if(val == 'true')
+				return true;
+
+			return false;
+		}
+
 		getRowProjection(item) {
 			var i=0;
 			return [
 				<RowInput mode={this.state.mode} value={item.number} name="Number" propertyName="number" key={i++} errors={this.state.errors} />,
 				<RowSelect mode={this.state.mode} value={item.type} name="Type" propertyName="type"  key={i++} errors={this.state.errors} 
-					options={["Drivers License","State ID","Military ID","Passport","Visa"]} />,
-				<RowSelect mode={this.state.mode} value={item.valid} name="Valid" propertyName="valid"  key={i++} errors={this.state.errors} 
+					options={["", "Drivers License","State ID","Military ID","Passport","Visa"]} />,
+				<RowSelect mode={this.state.mode} value={item.valid} name="Valid" propertyName="valid"  key={i++} errors={this.state.errors} getValue={this.parseBool}
 					options={[{value: false, text: "Invalid"},{value:true,text:"Valid"}]} />
 			];
 		}
@@ -721,6 +756,7 @@
 			return 'Identifications';
 		}
 	};
+
 	class Products extends MultiBox
 	{
 		constructor(props) {
@@ -730,12 +766,19 @@
 			return 'product'
 		}
 
+		getRandomNumber(currentValue) {
+			if(currentValue)
+				return currentValue;
+
+			return Math.floor(Math.random()*900000) + 100000;
+		}
+
 		getRowProjection(item) {
 			var i=0;
 			return [
-				<RowInput mode={this.state.mode} value={item.number} name="Number" propertyName="number" key={i++} errors={this.state.errors} />,
+				<RowInput mode={this.state.mode} value={item.number} name="Number" propertyName="number" key={i++} errors={this.state.errors} editable={false} getValue={this.getRandomNumber} />,
 				<RowSelect mode={this.state.mode} value={item.type} name="Type" propertyName="type"  key={i++} errors={this.state.errors} 
-					options={["Car Insurance", "Checking", "College Savings Plan", "Credit Card", "Credit Check", "House Insurance", "Life Insurance", "Loan", "Mutual Fund", "Prepaid Card", "Real Estate Assistance", "Savings", "Supplemental Coverages"]} />
+					options={["", "Car Insurance", "Checking", "College Savings Plan", "Credit Card", "Credit Check", "House Insurance", "Life Insurance", "Loan", "Mutual Fund", "Prepaid Card", "Real Estate Assistance", "Savings", "Supplemental Coverages"]} />
 			];
 		}
 		
@@ -835,27 +878,19 @@
 		<div id="member-not-found"></div>
 		<div class="row">
 			<div class="col-md-4">
-				<div id="personal" class="panel"></div>
+				<div id="personal"></div>
+				<div id="contact"></div>
+				<div id="employment"></div>
 			</div>
 			<div class="col-md-4">
-				<div id="contact" class="panel"></div>
+				<div id="military-service"></div>
+				<div id="identifications"></div>
 			</div>
 			<div class="col-md-4">
-				<div id="employment" class="panel"></div>
+				<div id="products"></div>
 			</div>
 		</div>
-		
-		<div class="row">
-			<div class="col-md-6">
-				<div id="military-service" class="panel"></div>
-				<div id="identifications" class="panel"></div>
-			</div>
-			<div class="col-md-6">
-				<div id="products" class="panel"></div>
-			</div>
-		</div>
-		
-		
+
    </div>
 	<hr />
 	<div class="text-center text-muted">
