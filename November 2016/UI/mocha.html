@@ -1,0 +1,121 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Mocha Tests</title>
+  <link href="https://cdn.rawgit.com/mochajs/mocha/2.2.5/mocha.css" rel="stylesheet" />
+</head>
+<body>
+  <div id="mocha"></div>
+
+  <script src="https://cdn.rawgit.com/jquery/jquery/2.1.4/dist/jquery.min.js"></script>
+  <script src="https://cdn.rawgit.com/Automattic/expect.js/0.3.1/index.js"></script>
+  <script src="https://cdn.rawgit.com/mochajs/mocha/2.2.5/mocha.js"></script>
+
+  <script>mocha.setup('bdd')</script>
+
+  <script src="should.js"></script>
+
+
+  <script src="Config.js"></script>
+  <script src="Services.js"></script>
+  <script src="Utils.js"></script>
+  <script>
+    
+    describe('Utils', function() {
+      describe('#typewatch()', function() {
+        it('should return a function that self-clears in 1 second', function(done) {
+          Utils.typewatch(
+              function() { done(); }, 
+              1000);
+        });
+      });
+
+      describe('#deepCompare(...)', function() {
+        var a = { a: 'a', b: null, c: 1, d: true };
+        var b = { a: 'a', b: null, c: 1, d: true };
+        var c = { a: 'c', b: {}, c: 2, d: false , e: 14};
+
+        it('should return true for identical objects (a, b)', function() {
+          Utils.deepCompare(a, b).should.equal(true);
+        });
+
+        it('should return false for non-identical objects (a, c)', function() {
+          Utils.deepCompare(a, c).should.equal(false);
+        });
+      });
+
+      describe('#getCountries()', function() {
+        it('should return an array of Countries', function() {
+          Utils.getCountries().length.should.greaterThan(0);
+        });
+      });
+      describe('#getStates()', function() {
+        it('should return an array of Countries', function() {
+          Utils.getStates().length.should.greaterThan(0);
+        });
+      });
+    });
+
+   describe('Services', function() {
+
+      describe('#postSearch()', function() {
+        it('should successfully search for \'Paul\'', function(done) {
+          var services = new Services(Config.ServiceResourceUrl, Config.ApiKey, 0);
+          services.postSearch('Paul', function() { done(); }, done);
+        });
+        it('should throw an error when the ChaosMonkey parameter is set to 1', function(done) {
+          var services = new Services(Config.ServiceResourceUrl, Config.ApiKey, 1);
+          services.postSearch('Paul', function() { done(); }, done);
+        });
+      });
+
+      describe('#getPersonalInformation()', function() {
+        it('should return Member #000001\'s Personal Information', function(done) {
+          var services = new Services(Config.ServiceResourceUrl, Config.ApiKey, 0);
+          services.getPersonalInformation('000001', function() { done(); }, done);
+        });
+      });
+
+      describe('#getContactInformation()', function() {
+        it('should return Member #000001\'s Contact Information', function(done) {
+          var services = new Services(Config.ServiceResourceUrl, Config.ApiKey, 0);
+          services.getContactInformation('000001', function() { done(); }, done);
+        });
+      });
+
+      describe('#getEmployment()', function() {
+        it('should return Member #000001\'s Employment Information', function(done) {
+          var services = new Services(Config.ServiceResourceUrl, Config.ApiKey, 0);
+          services.getEmployment('000001', function() { done(); }, done);
+        });
+      });
+
+      describe('#getProducts()', function() {
+        it('should return Member #000001\'s Product Information', function(done) {
+          var services = new Services(Config.ServiceResourceUrl, Config.ApiKey, 0);
+          services.getProducts('000001', function() { done(); }, done);
+        });
+      });
+
+      describe('#getIdentifications()', function() {
+        it('should return Member #000001\'s Identifications', function(done) {
+          var services = new Services(Config.ServiceResourceUrl, Config.ApiKey, 0);
+          services.getIdentifications('000001', function() { done(); }, done);
+        });
+      });
+
+      describe('#getMilitaryService()', function() {
+        it('should return Member #000001\'s Military Service Information', function(done) {
+          var services = new Services(Config.ServiceResourceUrl, Config.ApiKey, 0);
+          services.getMilitaryService('000001', function() { done(); }, done);
+        });
+      });
+    });
+
+    mocha.checkLeaks();
+    mocha.globals(['jQuery']);
+    mocha.run();
+  </script>
+</body>
+</html>
