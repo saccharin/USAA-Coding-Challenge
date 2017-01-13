@@ -21,6 +21,19 @@
   <script src="Services.js"></script>
   <script src="Utils.js"></script>
   <script>
+    function generateServiceTests(args) {
+        return function() {
+          it('should return Member #' + args.memberId + '\'s ' + args.apiName, function(done) {
+            var services = new Services(Config.ServiceResourceUrl, Config.ApiKey, 0);
+            services[args.func](args.memberId, function() { done(); }, done);
+          });
+
+          it('should fail when ChaosMonkey parameter is set to 1', function(done) {
+            var services = new Services(Config.ServiceResourceUrl, Config.ApiKey, 1);
+            services[args.func](args.memberId, done, function() { done(); });
+          });
+        }
+    }
     
     describe('Utils', function() {
       describe('#typewatch()', function() {
@@ -70,47 +83,38 @@
         });
       });
 
-      describe('#getPersonalInformation()', function() {
-        it('should return Member #000001\'s Personal Information', function(done) {
-          var services = new Services(Config.ServiceResourceUrl, Config.ApiKey, 0);
-          services.getPersonalInformation('000001', function() { done(); }, done);
-        });
-      });
+      var memberId = '00001';
 
-      describe('#getContactInformation()', function() {
-        it('should return Member #000001\'s Contact Information', function(done) {
-          var services = new Services(Config.ServiceResourceUrl, Config.ApiKey, 0);
-          services.getContactInformation('000001', function() { done(); }, done);
-        });
-      });
-
-      describe('#getEmployment()', function() {
-        it('should return Member #000001\'s Employment Information', function(done) {
-          var services = new Services(Config.ServiceResourceUrl, Config.ApiKey, 0);
-          services.getEmployment('000001', function() { done(); }, done);
-        });
-      });
-
-      describe('#getProducts()', function() {
-        it('should return Member #000001\'s Product Information', function(done) {
-          var services = new Services(Config.ServiceResourceUrl, Config.ApiKey, 0);
-          services.getProducts('000001', function() { done(); }, done);
-        });
-      });
-
-      describe('#getIdentifications()', function() {
-        it('should return Member #000001\'s Identifications', function(done) {
-          var services = new Services(Config.ServiceResourceUrl, Config.ApiKey, 0);
-          services.getIdentifications('000001', function() { done(); }, done);
-        });
-      });
-
-      describe('#getMilitaryService()', function() {
-        it('should return Member #000001\'s Military Service Information', function(done) {
-          var services = new Services(Config.ServiceResourceUrl, Config.ApiKey, 0);
-          services.getMilitaryService('000001', function() { done(); }, done);
-        });
-      });
+      describe('#getPersonalInformation()', generateServiceTests({
+        apiName: 'Personal Information',
+        func: 'getPersonalInformation',
+        memberId: memberId
+      }));
+      describe('#getContactInformation()', generateServiceTests({
+        apiName: 'Contact Information',
+        func: 'getContactInformation',
+        memberId: memberId
+      }));
+      describe('#getEmployment()', generateServiceTests({
+        apiName: 'Employment Information',
+        func: 'getEmployment',
+        memberId: memberId
+      }));
+      describe('#getProducts()', generateServiceTests({
+        apiName: 'Personal Information',
+        func: 'getProducts',
+        memberId: memberId
+      }));
+      describe('#getIdentifications()', generateServiceTests({
+        apiName: 'Identifications',
+        func: 'getIdentifications',
+        memberId: memberId
+      }));
+      describe('#getMilitaryService()', generateServiceTests({
+        apiName: 'Military Service Information',
+        func: 'getMilitaryService',
+        memberId: memberId
+      }));
     });
 
     mocha.checkLeaks();
